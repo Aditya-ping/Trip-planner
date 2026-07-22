@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Results - TravelEase AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<!-- Global Navigation Bar -->
+<nav class="navbar">
+    <a href="/" class="nav-brand">✨ TravelEase AI</a>
+    <div class="nav-links">
+        <a href="/">🗺️ Itinerary Planner</a>
+        <a href="/expenses">💰 Expense Tracker</a>
+        <a href="/saved-trips">📂 Saved Trips</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h1>✈️ Flights from {{ dep_iata }} to {{ arr_iata }}</h1>
+    <p class="subtitle">Quick search outputs from live flight indexes for your transit.</p>
+
+    {% if flights %}
+        {% for flight in flights %}
+            <div class="flight-card">
+
+                <div class="flight-header">
+                    <img src="https://content.airhex.com/content/logos/airlines_{{ flight.airline.iata }}_200_200_s.png"
+                         onerror="this.style.display='none'">
+
+                    <div>
+                        <h3 style="margin: 0; color: #a5b4fc;">{{ flight.airline.name }}</h3>
+                        <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-secondary);">Flight: {{ flight.flight.iata }}</p>
+                    </div>
+                </div>
+
+                <div class="flight-times">
+                    <div class="time-block">
+                        <span style="display: block; font-weight: 500; margin-bottom: 5px;">Departure</span>
+                        <h5 style="color: #38bdf8;">{{ flight.departure.iata }}</h5>
+                        <p style="font-size: 13px; margin: 4px 0 0 0; color: var(--text-secondary);">{{ flight.departure.formatted }}</p>
+                    </div>
+
+                    <div class="time-block">
+                        <span style="display: block; font-weight: 500; margin-bottom: 5px;">Arrival</span>
+                        <h5 style="color: #38bdf8;">{{ flight.arrival.iata }}</h5>
+                        <p style="font-size: 13px; margin: 4px 0 0 0; color: var(--text-secondary);">{{ flight.arrival.formatted }}</p>
+                    </div>
+                </div>
+
+                <div class="status" style="margin-top: 15px; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+                    🟢 Status: <span style="color: #34d399;">{{ flight.flight_status.capitalize() }}</span>
+                </div>
+
+            </div>
+        {% endfor %}
+    {% else %}
+        <p style="color: var(--text-secondary); text-align: center; padding: 20px 0;">No flights found matching criteria.</p>
+    {% endif %}
+
+    <form action="/search-flights" method="get" style="margin-top: 30px;">
+        <input type="hidden" name="dep_iata" value="{{ arr_iata }}">
+        <input type="hidden" name="arr_iata" value="{{ dep_iata }}">
+        <button type="submit" style="background: var(--accent-grad); box-shadow: 0 4px 15px rgba(6, 182, 212, 0.25);">🔍 Search Return Flights</button>
+    </form>
+
+    <a href="/" class="back-link">← Back to Planner</a>
+</div>
+
+</body>
+</html>

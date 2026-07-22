@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trip Plan for {{ city }} - TravelEase AI</title>
+    <!-- Leaflet.js CDNs -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<!-- Global Navigation Bar -->
+<nav class="navbar">
+    <a href="/" class="nav-brand">✨ TravelEase AI</a>
+    <div class="nav-links">
+        <a href="/">🗺️ Itinerary Planner</a>
+        <a href="/expenses">💰 Expense Tracker</a>
+        <a href="/saved-trips">📂 Saved Trips</a>
+    </div>
+</nav>
+
+<div class="container">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 15px;">
+        <h1 style="margin: 0; text-align: left;">🌍 Trip Plan for {{ city }}</h1>
+        <div style="display: flex; gap: 10px;" class="no-print">
+            {% if saved_trip_id %}
+                <button class="btn" style="width: auto; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981; padding: 10px 20px; font-size: 14px; cursor: default;" disabled>💾 Saved to Dashboard</button>
+            {% else %}
+                <button id="save-trip-btn" onclick="saveItinerary()" class="btn" style="width: auto; background: var(--primary-grad); padding: 10px 20px; font-size: 14px;">💾 Save Trip</button>
+            {% endif %}
+            <button onclick="window.print()" class="btn" style="width: auto; background: var(--accent-grad); padding: 10px 20px; font-size: 14px;">🖨️ Export PDF / Print</button>
+        </div>
+    </div>
+    <p class="subtitle" style="text-align: left; margin-bottom: 30px;">
+        Days: <strong>{{ days }}</strong> | Vibe: <strong>{{ vibe.capitalize() if vibe else 'Mixed' }}</strong> | Pace: <strong>{{ pace.capitalize() if pace else 'Moderate' }}</strong>
+    </p>
+
+    <!-- ================= MAP SECTION ================= -->
+    <h2>🗺️ Interactive Route Map</h2>
+    <div id="map"></div>
+
+    <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 30px; margin-top: 30px;" class="results-grid">
+        
+        <!-- ================= ITINERARY ================= -->
+        <div>
+            <h2>📅 Day-by-Day Plan</h2>
+            {% for day in itinerary %}
+                <div class="flight-card">
+                    <h3 style="margin-top: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <span>📅 Day {{ day.day }}</span>
+                    </h3>
+
+                    <h4 style="margin-top: 20px; color: #818cf8;">📍 Places to Visit</h4>
+                    <div id="places-grid-{{ day.day }}" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                        {% for place in day.places %}
+                            <div class="flight-card" style="margin: 0; padding: 0; overflow: hidden; display: flex; flex-direction: column; background: rgba(15, 22, 42, 0.45); border: 1px solid rgba(255, 255, 255, 0.05);">
+                                <img src="{{ place.image }}" alt="{{ place.name }}" style="width: 100%; height: 140px; object-fit: cover; border-bottom: 1px solid rgba(255, 255, 255, 0.05);" onerror="this.src='https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=500&auto=format&fit=crop';">
+                                
+                                <!-- Card actions -->
+                                <div class="place-actions" style="display: flex; gap: 4px; padding: 6px 12px; background: rgba(9, 13, 22, 0.6); border-bottom: 1px solid rgba(255, 255, 255, 0.05); justify-content: space-between; align-items: center;">
+                                    <div style="display: flex; gap: 4px;">
+                                        <button onclick="movePlace({{ day.day }}, {{ loop.index0 }}, -1)" title="Move Up" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; padding: 4px 8px; font-size: 11px; border-radius: 4px; width: auto; cursor: pointer;">▲</button>
+                                        <button onclick="movePlace({{ day.day }}, {{ loop.index0 }}, 1)" title="Move Down" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; padding: 4px 8px; font-size: 11px; border-radius: 4px; width: auto; cursor: pointer;">▼</button>
+                                    </div>
+                                    <div style="display: flex; gap: 4px;">
+                                        <button onclick="openSwapModal({{ day.day }}, {{ loop.index0 }}, '{{ place.category }}')" title="Swap Attraction" style="background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3); color: #a5b4fc; padding: 4px 8px; font-size: 11px; border-radius: 4px; width: auto; cursor: pointer;">🔄 Swap</button>
+                                        <button onclick="removePlace({{ day.day }}, {{ loop.index0 }})" title="Remove Spot" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 4px 8px; font-size: 11px; border-radius: 4px; width: auto; cursor: pointer;">❌ Remove</button>
+                                    </div>
+                                </div>
+
+                                <div style="padding: 16px; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between;">
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                                            <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: #f8fafc; line-height: 1.3;">{{ place.name }}</h4>
+                                            {% if place.rating %}
+                                                <span style="color: #fbbf24; font-size: 13px; font-weight: 600; white-space: nowrap;">⭐ {{ place.rating }}</span>
+                                            {% endif %}
+                                        </div>
+                                        <span style="display: inline-block; background: rgba(99, 102, 241, 0.15); color: #a5b4fc; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; margin-top: 8px; letter-spacing: 0.5px;">
+                                            {{ place.category.capitalize() }}
+                                        </span>
+                                        <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.4; margin: 10px 0 0 0;">
+                                            {{ place.description }}
+                                        </p>
+                                    </div>
+                                    <div style="margin-top: 15px; display: flex; justify-content: flex-end;">
+                                        <a href="https://www.google.com/maps/search/?api=1&query={{ place.latitude }},{{ place.longitude }}"
+                                           target="_blank" class="btn" style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); box-shadow: none; color: #818cf8; padding: 6px 12px; font-size: 11px; width: auto; border-radius: 8px; text-decoration: none;">
+                                            📍 Maps
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div id="routes-section-{{ day.day }}">
+                        {% if day.routes %}
+                            <h4 style="margin-top: 20px; color: #34d399;">🚗 Travel Directions</h4>
+                            {% for route in day.routes %}
+                                <div style="margin-bottom: 12px; background: rgba(9, 13, 22, 0.4); padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.03);">
+                                    <div style="display: flex; justify-content: space-between; font-weight: 500; font-size: 14px;">
+                                        <span>{{ route.from }} → {{ route.to }}</span>
+                                        <span style="color: #6366f1;">{{ route.mode }}</span>
+                                    </div>
+                                    <div style="font-size: 13px; color: var(--text-secondary); margin-top: 6px;">
+                                        📏 Distance: <strong>{{ route.distance }} km</strong> | 
+                                        ⏱️ Est. Time: <strong>{{ route.time }} mins</strong> | 
+                                        💸 Fuel Cost: <strong>₹{{ route.cost }}</strong>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- ================= RIGHT PANEL ================= -->
+        <div>
+            
+            <!-- Weather Advisor -->
+            <h2>🌦️ Smart Climate Guide</h2>
+            <div class="flight-card" style="margin-top: 0;">
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <div style="font-size: 32px;">🌡️</div>
+                    <div>
+                        <div style="font-size: 20px; font-weight: 700; color: #38bdf8;">{{ weather.temp }}</div>
+                        <div style="font-size: 14px; font-weight: 600; color: #a5b4fc;">{{ weather.condition }}</div>
+                    </div>
+                </div>
+                <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-top: 15px;">
+                    {{ weather.description }}
+                </p>
+                
+                <h4 style="margin-top: 20px; margin-bottom: 12px;">🎒 Suggested Packing Checklist:</h4>
+                <div class="packing-container" style="grid-template-columns: 1fr;">
+                    {% for item in weather.packing %}
+                    <label class="checklist-item" onclick="toggleCheck(this)">
+                        <input type="checkbox" style="margin-right: 8px;">
+                        <span>{{ item }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Budget Summary -->
+            <h2>💰 Smart Budget Estimator</h2>
+            <div class="flight-card">
+                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 5px;">Total Trip Cost (Travel + Hotel):</div>
+                <div id="total-trip-cost-val" style="font-size: 24px; font-weight: 800; color: #10b981; margin-bottom: 15px;">₹{{ total_trip_cost }}</div>
+
+                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 5px;">Remaining Budget:</div>
+                <div id="budget-remaining-val" style="font-size: 20px; font-weight: 700; color: {% if budget_remaining >= 0 %}#10b981{% else %}#ef4444{% endif %};">
+                    ₹{{ budget_remaining }} {% if budget_remaining >= 0 %}(Under Budget){% else %}(Over Budget){% endif %}
+                </div>
+            </div>
+
+            <!-- Hotels -->
+            <h2>🏨 Recommended Hotels</h2>
+            {% if hotels %}
+                {% for hotel in hotels %}
+                    <div class="flight-card">
+                        <h3 style="margin-top: 0; font-size: 18px; color: #a5b4fc;">
+                            {% if loop.index == 1 %}
+                                👑 Recommended Choice:
+                            {% endif %}
+                            {{ hotel.properties.name }}
+                        </h3>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin: 6px 0;">
+                            📍 {{ hotel.properties.formatted if hotel.properties.formatted else "Address not available" }}
+                        </p>
+                        <p style="font-size: 13px; margin: 6px 0;">
+                            🚶 Distance from first stop: <strong>{{ hotel.distance_from_first }} km</strong>
+                        </p>
+                        <p style="font-size: 14px; font-weight: 600; color: #10b981; margin: 10px 0;">
+                            ₹{{ hotel.estimated_price }} <span style="font-weight: normal; font-size: 12px; color: var(--text-secondary);">/ night</span>
+                        </p>
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ hotel.geometry.coordinates[1] }},{{ hotel.geometry.coordinates[0] }}"
+                           target="_blank" class="btn" style="background: rgba(99, 102, 241, 0.15); box-shadow: none; color: #818cf8; font-size: 12px; padding: 8px 14px; width: auto; border: 1px solid rgba(99, 102, 241, 0.2);">
+                           🗺️ View on Maps
+                        </a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No hotels found matching criteria.</p>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    <br>
+    <a href="/" class="back-link">← Plan Another Trip</a>
+
+</div>
+
+<!-- Swap Attraction Modal -->
+<div id="swap-modal" style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(9, 13, 22, 0.85); backdrop-filter: blur(8px); justify-content: center; align-items: center;">
+    <div style="background: rgba(15, 22, 42, 0.95); border: 1px solid var(--border-color); padding: 30px; border-radius: 20px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: var(--shadow-main); position: relative; color: white;">
+        <span onclick="closeSwapModal()" style="position: absolute; right: 20px; top: 15px; color: var(--text-secondary); font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+        <h2 style="margin-top: 0; color: #a5b4fc; border-left: none; padding-left: 0;">🔄 Swap Attraction</h2>
+        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px;">Choose an alternative attraction to swap with.</p>
+        <div id="alternatives-list" style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Rendered by JS -->
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet Map & Interactive Editing logic -->
+<script>
+    // Global itinerary and map variables
+    let itinerary = {{ itinerary | tojson }};
+    let hotels = {{ hotels | tojson }};
+    let weather = {{ weather | tojson }};
+    let city = "{{ city }}";
+    let days = {{ days }};
+    let pace = "{{ pace }}";
+    let vibe = "{{ vibe }}";
+    let totalTripCost = {{ total_trip_cost }};
+    let budgetRemaining = {{ budget_remaining }};
+    let originalBudget = {{ budget_remaining }} + {{ total_trip_cost }};
+
+    let map;
+    let markersLayer;
+    let polylinesLayer;
+    let alternativePlaces = [];
+    let swapTargetDay = null;
+    let swapTargetIndex = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        initMap();
+        renderMap();
+    });
+
+    function initMap() {
+        let allCoords = [];
+        itinerary.forEach(day => {
+            day.places.forEach(p => {
+                let lat = p.latitude || p.lat;
+                let lng = p.longitude || p.lng;
+                if (lat && lng) {
+                    allCoords.push([lat, lng]);
+                }
+            });
+        });
+
+        if (allCoords.length === 0) {
+            document.getElementById('map').style.display = 'none';
+            return;
+        }
+
+        map = L.map('map').setView(allCoords[0], 12);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        markersLayer = L.layerGroup().addTo(map);
+        polylinesLayer = L.layerGroup().addTo(map);
+    }
+
+    function renderMap() {
+        if (!map) return;
+
+        markersLayer.clearLayers();
+        polylinesLayer.clearLayers();
+
+        const colors = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#ef4444'];
+        const bounds = L.latLngBounds();
+        let hasCoords = false;
+
+        itinerary.forEach((day, index) => {
+            const dayColor = colors[index % colors.length];
+
+            // Markers
+            day.places.forEach((place, idx) => {
+                let lat = place.latitude || place.lat;
+                let lng = place.longitude || place.lng;
+                if (lat && lng) {
+                    const marker = L.marker([lat, lng]).addTo(markersLayer);
+                    marker.bindPopup(`<b>Day ${day.day} - Stop ${idx + 1}</b><br><strong>${place.name}</strong>`);
+                    bounds.extend([lat, lng]);
+                    hasCoords = true;
+                }
+            });
+
+            // Route Polylines
+            if (day.routes) {
+                day.routes.forEach(route => {
+                    if (route.coordinates && route.coordinates.length > 0) {
+                        const polyline = L.polyline(route.coordinates, {
+                            color: dayColor,
+                            weight: 4,
+                            opacity: 0.85,
+                            dashArray: '5, 10'
+                        }).addTo(polylinesLayer);
+
+                        polyline.bindPopup(`<b>Route:</b> ${route.from} ➔ ${route.to}`);
+                        route.coordinates.forEach(coord => {
+                            bounds.extend(coord);
+                        });
+                        hasCoords = true;
+                    }
+                });
+            }
+        });
+
+        if (hasCoords) {
+            map.fitBounds(bounds, { padding: [40, 40] });
+        }
+    }
+
+    // Interactive Itinerary Operations
+    function movePlace(dayNum, index, direction) {
+        const targetIndex = index + direction;
+        const dayPlaces = itinerary[dayNum - 1].places;
+        
+        if (targetIndex < 0 || targetIndex >= dayPlaces.length) {
+            return; // Out of bounds
+        }
+        
+        // Swap elements in place
+        const temp = dayPlaces[index];
+        dayPlaces[index] = dayPlaces[targetIndex];
+        dayPlaces[targetIndex] = temp;
+        
+        // Recalculate routes and render updates
+        recalculateRoutesForDay(dayNum);
+    }
+
+    function removePlace(dayNum, index) {
+        if (!confirm("Are you sure you want to remove this stop from your itinerary?")) {
+            return;
+        }
+        
+        const dayPlaces = itinerary[dayNum - 1].places;
+        dayPlaces.splice(index, 1);
+        
+        recalculateRoutesForDay(dayNum);
+    }
+
+    function openSwapModal(dayNum, index, category) {
+        swapTargetDay = dayNum;
+        swapTargetIndex = index;
+        
+        const modal = document.getElementById("swap-modal");
+        modal.style.display = "flex";
+        
+        const listContainer = document.getElementById("alternatives-list");
+        listContainer.innerHTML = '<div style="color: var(--text-secondary); text-align: center; padding: 20px;">Loading alternative attractions...</div>';
+        
+        // If we haven't loaded alternative places for this city yet
+        if (alternativePlaces.length === 0) {
+            fetch(`/get-alternative-places?city=${encodeURIComponent(city)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alternativePlaces = data.places;
+                        renderAlternatives(category);
+                    } else {
+                        listContainer.innerHTML = '<div style="color: #ef4444;">Failed to load alternatives.</div>';
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    listContainer.innerHTML = '<div style="color: #ef4444;">Error loading alternatives.</div>';
+                });
+        } else {
+            renderAlternatives(category);
+        }
+    }
+
+    function closeSwapModal() {
+        document.getElementById("swap-modal").style.display = "none";
+    }
+
+    function renderAlternatives(category) {
+        const listContainer = document.getElementById("alternatives-list");
+        listContainer.innerHTML = "";
+        
+        // Get list of names currently in itinerary to prevent duplicates
+        const currentNames = new Set();
+        itinerary.forEach(day => {
+            day.places.forEach(p => currentNames.add(p.name.toLowerCase()));
+        });
+        
+        // Filter options: exclude currently planned spots, prioritize matching category
+        let options = alternativePlaces.filter(p => !currentNames.has(p.name.toLowerCase()));
+        
+        // Sort: preferred category first, then high rating
+        options.sort((a, b) => {
+            const aCatMatch = a.category === category ? 1 : 0;
+            const bCatMatch = b.category === category ? 1 : 0;
+            if (aCatMatch !== bCatMatch) {
+                return bCatMatch - aCatMatch;
+            }
+            return (b.rating || 0) - (a.rating || 0);
+        });
+        
+        if (options.length === 0) {
+            listContainer.innerHTML = '<div style="color: var(--text-secondary); text-align: center; padding: 20px;">No alternative attractions available in database.</div>';
+            return;
+        }
+        
+        options.forEach(place => {
+            const div = document.createElement("div");
+            div.style.background = "rgba(30, 41, 59, 0.4)";
+            div.style.border = "1px solid var(--border-color)";
+            div.style.borderRadius = "12px";
+            div.style.padding = "16px";
+            div.style.display = "flex";
+            div.style.justifyContent = "space-between";
+            div.style.alignItems = "center";
+            div.style.gap = "15px";
+            div.style.transition = "border-color 0.2s";
+            
+            div.innerHTML = `
+                <div style="flex-grow: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                        <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: #f8fafc;">${place.name}</h4>
+                        <span style="color: #fbbf24; font-size: 13px; font-weight: 600;">⭐ ${place.rating || 'N/A'}</span>
+                    </div>
+                    <span style="display: inline-block; background: rgba(99, 102, 241, 0.15); color: #a5b4fc; padding: 2px 8px; border-radius: 20px; font-size: 9px; font-weight: 700; text-transform: uppercase; margin-top: 6px;">
+                        ${place.category}
+                    </span>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin: 6px 0 0 0; line-height: 1.4;">${place.description}</p>
+                </div>
+                <div>
+                    <button onclick="selectSwap(${place.id})" class="btn" style="width: auto; background: var(--accent-grad); font-size: 12px; padding: 8px 16px; border-radius: 8px;">Swap In</button>
+                </div>
+            `;
+            listContainer.appendChild(div);
+        });
+    }
+
+    function selectSwap(placeId) {
+        const place = alternativePlaces.find(p => p.id === placeId);
+        if (!place) return;
+        
+        itinerary[swapTargetDay - 1].places[swapTargetIndex] = place;
+        closeSwapModal();
+        recalculateRoutesForDay(swapTargetDay);
+    }
+
+    function recalculateRoutesForDay(dayNum) {
+        const day = itinerary[dayNum - 1];
+        
+        // Show loading state in DOM
+        const routesContainer = document.getElementById(`routes-section-${dayNum}`);
+        routesContainer.innerHTML = '<div style="color: var(--text-secondary); padding: 10px 0; font-size: 13px;">Recalculating directions...</div>';
+
+        // Re-render the place cards in the DOM immediately
+        renderPlaceCards(dayNum);
+
+        fetch('/recalculate-routes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ places: day.places })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                day.routes = data.routes;
+                renderRoutesList(dayNum);
+                renderMap();
+                updateBudgetSummary();
+            } else {
+                console.error("Recalculation failed:", data.error);
+                routesContainer.innerHTML = '<div style="color: #ef4444; padding: 10px 0; font-size: 13px;">Failed to recalculate routes.</div>';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            routesContainer.innerHTML = '<div style="color: #ef4444; padding: 10px 0; font-size: 13px;">Error recalculating routes.</div>';
+        });
+    }
+
+    function renderPlaceCards(dayNum) {
+        const day = itinerary[dayNum - 1];
+        const grid = document.getElementById(`places-grid-${dayNum}`);
+        grid.innerHTML = "";
+        
+        if (day.places.length === 0) {
+            grid.innerHTML = '<div style="grid-column: 1/-1; color: var(--text-secondary); text-align: center; padding: 20px;">No places planned for this day. Remove the day or swap in attractions.</div>';
+            return;
+        }
+
+        day.places.forEach((place, index) => {
+            const card = document.createElement("div");
+            card.className = "flight-card";
+            card.style.margin = "0";
+            card.style.padding = "0";
+            card.style.overflow = "hidden";
+            card.style.display = "flex";
+            card.style.flexDirection = "column";
+            card.style.background = "rgba(15, 22, 42, 0.45)";
+            card.style.border = "1px solid rgba(255, 255, 255, 0.05)";
+            
+            card.innerHTML = `
+                <img src="${place.image}" alt="${place.name}" style="width: 100%; height: 140px; object-fit: cover; border-bottom: 1px solid rgba(255, 255, 255, 0.05);" onerror="this.src='https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=500&auto=format&fit=crop';">
+                
+                <div class="place-actions" style="display: flex; gap: 4px; padding: 6px 12px; background: rgba(9, 13, 22, 0.6); border-bottom: 1px solid rgba(255, 255, 255, 0.05); justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 4px;">
+                        <button onclick="movePlace(${dayNum}, ${index}, -1)" title="Move Up" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; padding: 4px 8px; font-size: 11px; border-radius: 4px; width: auto; cursor: pointer;">▲</button>
+                        <button onclick="movePlace(${dayNum}, ${index}, 1)" title="Move Down" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; padding: 4px 8px; font-size: 11px; border-radius: 4px; width: auto; cursor: pointer;">▼</button>
+                    </div>
+                    <div style="display: flex; gap: 4px;">
+                        <button onclick="openSwapModal(${dayNum}, ${index}, '${place.category}')" title="Swap Attraction" style="background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3); color: #a5b4fc; padding: 4px 8px; font-size: 11px; border-radius: 4px; width: auto; cursor: pointer;">🔄 Swap</button>
+                        <button onclick="removePlace(${dayNum}, ${index})" title="Remove Spot" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 4px 8px; font-size: 11px; border-radius: 4px; width: auto; cursor: pointer;">❌ Remove</button>
+                    </div>
+                </div>
+
+                <div style="padding: 16px; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                            <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: #f8fafc; line-height: 1.3;">${place.name}</h4>
+                            ${place.rating ? `<span style="color: #fbbf24; font-size: 13px; font-weight: 600; white-space: nowrap;">⭐ ${place.rating}</span>` : ''}
+                        </div>
+                        <span style="display: inline-block; background: rgba(99, 102, 241, 0.15); color: #a5b4fc; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; margin-top: 8px; letter-spacing: 0.5px;">
+                            ${place.category}
+                        </span>
+                        <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.4; margin: 10px 0 0 0;">
+                            ${place.description}
+                        </p>
+                    </div>
+                    <div style="margin-top: 15px; display: flex; justify-content: flex-end;">
+                        <a href="https://www.google.com/maps/search/?api=1&query=${place.latitude || place.lat},${place.longitude || place.lng}"
+                           target="_blank" class="btn" style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); box-shadow: none; color: #818cf8; padding: 6px 12px; font-size: 11px; width: auto; border-radius: 8px; text-decoration: none;">
+                            📍 Maps
+                        </a>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function renderRoutesList(dayNum) {
+        const day = itinerary[dayNum - 1];
+        const routesContainer = document.getElementById(`routes-section-${dayNum}`);
+        routesContainer.innerHTML = "";
+        
+        if (!day.routes || day.routes.length === 0) {
+            return;
+        }
+        
+        let html = `<h4 style="margin-top: 20px; color: #34d399;">🚗 Travel Directions</h4>`;
+        day.routes.forEach(route => {
+            html += `
+                <div style="margin-bottom: 12px; background: rgba(9, 13, 22, 0.4); padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.03);">
+                    <div style="display: flex; justify-content: space-between; font-weight: 500; font-size: 14px;">
+                        <span>${route.from} → ${route.to}</span>
+                        <span style="color: #6366f1;">${route.mode}</span>
+                    </div>
+                    <div style="font-size: 13px; color: var(--text-secondary); margin-top: 6px;">
+                        📏 Distance: <strong>${route.distance} km</strong> | 
+                        ⏱️ Est. Time: <strong>${route.time} mins</strong> | 
+                        💸 Fuel Cost: <strong>₹${route.cost}</strong>
+                    </div>
+                </div>
+            `;
+        });
+        
+        routesContainer.innerHTML = html;
+    }
+
+    function updateBudgetSummary() {
+        let totalRouteCost = 0;
+        itinerary.forEach(day => {
+            if (day.routes) {
+                day.routes.forEach(route => {
+                    totalRouteCost += route.cost || 0;
+                });
+            }
+        });
+        
+        let avgHotelCost = 0;
+        if (hotels && hotels.length > 0) {
+            avgHotelCost = parseInt(hotels[0].estimated_price || 0);
+        }
+        
+        totalTripCost = totalRouteCost + avgHotelCost;
+        budgetRemaining = originalBudget - totalTripCost;
+        
+        document.getElementById("total-trip-cost-val").innerText = "₹" + totalTripCost;
+        
+        const remainingEl = document.getElementById("budget-remaining-val");
+        if (budgetRemaining >= 0) {
+            remainingEl.innerText = `₹${budgetRemaining} (Under Budget)`;
+            remainingEl.style.color = "#10b981";
+        } else {
+            remainingEl.innerText = `₹${budgetRemaining} (Over Budget)`;
+            remainingEl.style.color = "#ef4444";
+        }
+    }
+
+    // Save itinerary functionality
+    function saveItinerary() {
+        const saveBtn = document.getElementById("save-trip-btn");
+        if (!saveBtn) return;
+
+        saveBtn.disabled = true;
+        saveBtn.innerText = "Saving...";
+        
+        const payload = {
+            city: city,
+            days: days,
+            budget: originalBudget,
+            pace: pace,
+            vibe: vibe,
+            itinerary: itinerary,
+            hotels: hotels,
+            weather: weather,
+            total_trip_cost: totalTripCost,
+            budget_remaining: budgetRemaining
+        };
+        
+        fetch('/save-trip', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                saveBtn.innerText = "💾 Saved to Dashboard";
+                saveBtn.style.background = "rgba(16, 185, 129, 0.2)";
+                saveBtn.style.border = "1px solid rgba(16, 185, 129, 0.4)";
+                saveBtn.style.color = "#10b981";
+                saveBtn.onclick = null;
+                saveBtn.style.cursor = "default";
+                alert("Trip successfully saved to dashboard!");
+            } else {
+                alert("Failed to save trip: " + (data.error || "Unknown error"));
+                saveBtn.disabled = false;
+                saveBtn.innerText = "💾 Save Trip";
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("An error occurred while saving.");
+            saveBtn.disabled = false;
+            saveBtn.innerText = "💾 Save Trip";
+        });
+    }
+
+    // Checkbox dynamic crossing
+    function toggleCheck(element) {
+        const checkbox = element.querySelector('input[type="checkbox"]');
+        if (event.target !== checkbox) {
+            checkbox.checked = !checkbox.checked;
+        }
+        if (checkbox.checked) {
+            element.classList.add('checked');
+        } else {
+            element.classList.remove('checked');
+        }
+    }
+</script>
+
+</body>
+</html>

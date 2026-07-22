@@ -1,0 +1,31 @@
+# Environment & Secrets
+.env
+*.env
+*.pem
+*.key
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Databases
+database.db
+*.sqlite
+*.sqlite3
+*.db
+
+# Node / Next.js
+node_modules/
+travel-app/node_modules/
+travel-app/.next/
+travel-app/out/
+travel-app/build/
+
+# IDE / System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker - TravelEase AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<!-- Global Navigation Bar -->
+<nav class="navbar">
+    <a href="/" class="nav-brand">✨ TravelEase AI</a>
+    <div class="nav-links">
+        <a href="/">🗺️ Itinerary Planner</a>
+        <a href="/expenses" class="active">💰 Expense Tracker</a>
+        <a href="/saved-trips">📂 Saved Trips</a>
+    </div>
+</nav>
+
+<div class="container">
+    <h1>💰 Travel Expense Tracker</h1>
+    <p class="subtitle">Log your travel expenditures real-time, inspect breakdowns, and maintain control of your itinerary budget.</p>
+
+    <div class="tracker-grid">
+        
+        <!-- ================= LEFT COLUMN: ADD & LIST EXPENSES ================= -->
+        <div>
+            <h2>📝 Add New Expense</h2>
+            <form method="POST" action="/add_expense" style="margin-top: 15px;">
+                <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 15px;">
+                    <div>
+                        <label for="category">Category</label>
+                        <select name="category" id="category" required>
+                            <option value="Food">🍔 Food & Dining</option>
+                            <option value="Transport">🚗 Cab / Transport</option>
+                            <option value="Entry Tickets">🎟️ Entry Tickets</option>
+                            <option value="Shopping">🛍️ Shopping</option>
+                            <option value="Accommodation">🏨 Accommodation</option>
+                            <option value="Other">🌟 Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="amount">Amount (₹)</label>
+                        <input type="number" name="amount" id="amount" placeholder="e.g. 500" required>
+                    </div>
+                </div>
+
+                <button type="submit">➕ Add Expense</button>
+            </form>
+
+            <hr style="margin: 30px 0;">
+
+            <h2>📋 Expenses Log</h2>
+            {% if expenses %}
+                <ul class="expense-list">
+                    {% for expense in expenses %}
+                        <li class="expense-list-item">
+                            <div class="expense-meta">
+                                <span class="expense-category">
+                                    {% if expense.category == 'Food' %}🍔 Food & Dining
+                                    {% elif expense.category == 'Transport' %}🚗 Cab / Transport
+                                    {% elif expense.category == 'Entry Tickets' %}🎟️ Entry Tickets
+                                    {% elif expense.category == 'Shopping' %}🛍️ Shopping
+                                    {% elif expense.category == 'Accommodation' %}🏨 Accommodation
+                                    {% else %}🌟 {{ expense.category }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <span class="expense-amount">₹{{ expense.amount }}</span>
+                                <a href="/delete_expense/{{ expense.id }}" class="btn-delete" title="Delete record">Delete</a>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                <div style="margin-top: 25px;">
+                    <a href="/clear_expenses" class="btn" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); box-shadow: none; font-size: 13px; padding: 10px 18px; width: auto;">
+                        🗑️ Clear All Expenses
+                    </a>
+                </div>
+            {% else %}
+                <p style="color: var(--text-secondary);">No expenses logged yet. Fill out the form above to start tracking!</p>
+            {% endif %}
+        </div>
+
+        <!-- ================= RIGHT COLUMN: DATA BREAKDOWN CHART ================= -->
+        <div>
+            <h2>📊 Category Breakdown</h2>
+            <div class="flight-card" style="margin-top: 15px;">
+                <div class="chart-container" id="expenseChartContainer" style="height: 250px; position: relative;">
+                    <canvas id="expenseChart"></canvas>
+                </div>
+                <div id="noChartText" style="display: none; text-align: center; color: var(--text-secondary); padding: 40px 0;">
+                    Add expenses to view category chart analysis.
+                </div>
+
+                <hr style="margin: 20px 0;">
+
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 500; color: var(--text-secondary);">Total Spent:</span>
+                    <span style="font-size: 20px; font-weight: 800; color: #818cf8;">₹{{ total_spent }}</span>
+                </div>
+            </div>
+            
+            <a href="/" class="back-btn">← Back to Itinerary Planner</a>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Chart Script -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const summaryData = {
+            {% for category, amount in category_summary.items() %}
+            "{{ category }}": {{ amount }},
+            {% endfor %}
+        };
+        
+        const labels = Object.keys(summaryData);
+        const data = Object.values(summaryData);
+        
+        if (labels.length === 0) {
+            document.getElementById('expenseChartContainer').style.display = 'none';
+            document.getElementById('noChartText').style.display = 'block';
+            return;
+        }
+
+        const ctx = document.getElementById('expenseChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Expenses (₹)',
+                    data: data,
+                    backgroundColor: [
+                        '#818cf8', // Indigo
+                        '#34d399', // Emerald
+                        '#fbbf24', // Amber
+                        '#ec4899', // Pink
+                        '#a78bfa', // Purple
+                        '#38bdf8'  // Cyan
+                    ],
+                    borderWidth: 1,
+                    borderColor: 'rgba(9, 13, 22, 0.7)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#94a3b8',
+                            boxWidth: 12,
+                            padding: 12,
+                            font: {
+                                family: 'Inter',
+                                size: 12,
+                                weight: '500'
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

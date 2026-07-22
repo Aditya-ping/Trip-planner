@@ -1,0 +1,1702 @@
+[
+  {
+    "name": "Hawa Mahal",
+    "city": "Jaipur",
+    "category": "history",
+    "rating": 4.7,
+    "latitude": 26.9239,
+    "longitude": 75.8267,
+    "description": "A stunning five-story palace built of red and pink sandstone, famous for its unique honeycomb window design.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/East_facade_Hawa_Mahal_Jaipur_from_ground_level_%28July_2022%29_-_img_01.jpg/960px-East_facade_Hawa_Mahal_Jaipur_from_ground_level_%28July_2022%29_-_img_01.jpg"
+  },
+  {
+    "name": "Amber Fort",
+    "city": "Jaipur",
+    "category": "history",
+    "rating": 4.8,
+    "latitude": 26.9855,
+    "longitude": 75.8513,
+    "description": "A magnificent hilltop fort featuring majestic sandstone architecture, beautiful courtyards, and scenic lake views.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/20191219_Fort_Amber%2C_Amer%2C_Jaipur_0955_9481.jpg/960px-20191219_Fort_Amber%2C_Amer%2C_Jaipur_0955_9481.jpg"
+  },
+  {
+    "name": "City Palace",
+    "city": "Jaipur",
+    "category": "history",
+    "rating": 4.6,
+    "latitude": 26.9258,
+    "longitude": 75.8237,
+    "description": "A grand royal palace complex displaying a blend of Rajasthani and Mughal architecture with exquisite museums.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Chandra_Mahal%2C_City_Palace%2C_Jaipur%2C_20191218_0951_9043.jpg/960px-Chandra_Mahal%2C_City_Palace%2C_Jaipur%2C_20191218_0951_9043.jpg"
+  },
+  {
+    "name": "Nahargarh Fort",
+    "city": "Jaipur",
+    "category": "history",
+    "rating": 4.6,
+    "latitude": 26.9373,
+    "longitude": 75.815,
+    "description": "A historic fort standing on the edge of the Aravalli Hills, offering breathtaking panoramic views of Jaipur.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Nahargarh_13.jpg/960px-Nahargarh_13.jpg"
+  },
+  {
+    "name": "Jaigarh Fort",
+    "city": "Jaipur",
+    "category": "history",
+    "rating": 4.6,
+    "latitude": 26.9852,
+    "longitude": 75.8486,
+    "description": "A rugged fortress overlooking Amber Fort, famous for housing the Jaivana cannon—the world's largest cannon on wheels.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Rajasthan-Jaipur-Jaigarh-Fort-compound-Apr-2004-00.JPG/960px-Rajasthan-Jaipur-Jaigarh-Fort-compound-Apr-2004-00.JPG"
+  },
+  {
+    "name": "Jal Mahal",
+    "city": "Jaipur",
+    "category": "nature",
+    "rating": 4.5,
+    "latitude": 26.9537,
+    "longitude": 75.8466,
+    "description": "An enchanting palace constructed in the middle of Man Sagar Lake, showcasing symmetrical architectural beauty.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Jaipur_03-2016_39_Jal_Mahal_-_Water_Palace.jpg/960px-Jaipur_03-2016_39_Jal_Mahal_-_Water_Palace.jpg"
+  },
+  {
+    "name": "Albert Hall Museum",
+    "city": "Jaipur",
+    "category": "museum",
+    "rating": 4.5,
+    "latitude": 26.9117,
+    "longitude": 75.819,
+    "description": "The oldest museum of Rajasthan, showcasing a rich collection of artifacts, paintings, and historical relics.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Albert_Hall_%28_Jaipur_%29.jpg/960px-Albert_Hall_%28_Jaipur_%29.jpg"
+  },
+  {
+    "name": "Patrika Gate",
+    "city": "Jaipur",
+    "category": "culture",
+    "rating": 4.6,
+    "latitude": 26.8456,
+    "longitude": 75.804,
+    "description": "A vibrant, colorful gateway serving as a monument and photogenic entrance to Jawahar Circle garden.",
+    "image": "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Birla Mandir Jaipur",
+    "city": "Jaipur",
+    "category": "temple",
+    "rating": 4.7,
+    "latitude": 26.892,
+    "longitude": 75.8158,
+    "description": "A modern white marble temple dedicated to Lord Vishnu and Goddess Lakshmi, glowing beautifully in the evening.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Birla_Mandir_Jaipur_%282022-07%29.jpg/960px-Birla_Mandir_Jaipur_%282022-07%29.jpg"
+  },
+  {
+    "name": "Chokhi Dhani",
+    "city": "Jaipur",
+    "category": "culture",
+    "rating": 4.4,
+    "latitude": 26.7666,
+    "longitude": 75.8306,
+    "description": "An ethnic resort village offering an immersive cultural experience of traditional Rajasthani food, dance, and arts.",
+    "image": "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "India Gate",
+    "city": "Delhi",
+    "category": "history",
+    "rating": 4.7,
+    "latitude": 28.6129,
+    "longitude": 77.2295,
+    "description": "A majestic war memorial archway honoring fallen soldiers, surrounded by lush green lawns and fountains.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/India_Gate_%28All_India_War_Memorial%29.jpg/960px-India_Gate_%28All_India_War_Memorial%29.jpg"
+  },
+  {
+    "name": "Red Fort",
+    "city": "Delhi",
+    "category": "history",
+    "rating": 4.6,
+    "latitude": 28.6562,
+    "longitude": 77.241,
+    "description": "An iconic UNESCO World Heritage site built of red sandstone, representing the hub of the historical Mughal empire.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Delhi_fort.jpg/960px-Delhi_fort.jpg"
+  },
+  {
+    "name": "Qutub Minar",
+    "city": "Delhi",
+    "category": "history",
+    "rating": 4.7,
+    "latitude": 28.5244,
+    "longitude": 77.1855,
+    "description": "A towering 73-meter brick minaret built in 1193, surrounded by ancient ruins of Delhi's first mosque.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Hashtsal_Minar_10.jpg/960px-Hashtsal_Minar_10.jpg"
+  },
+  {
+    "name": "Lotus Temple",
+    "city": "Delhi",
+    "category": "temple",
+    "rating": 4.5,
+    "latitude": 28.5535,
+    "longitude": 77.2588,
+    "description": "A striking flowerlike Bahai House of Worship open to all, renowned for its architectural beauty and silence.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/LotusDelhi.jpg/960px-LotusDelhi.jpg"
+  },
+  {
+    "name": "Humayun's Tomb",
+    "city": "Delhi",
+    "category": "history",
+    "rating": 4.6,
+    "latitude": 28.5933,
+    "longitude": 77.2507,
+    "description": "A grand garden-tomb of the Mughal Emperor Humayun, featuring spectacular Persian double-dome architecture.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Tomb_of_Humayun%2C_Delhi.jpg/960px-Tomb_of_Humayun%2C_Delhi.jpg"
+  },
+  {
+    "name": "Akshardham Temple",
+    "city": "Delhi",
+    "category": "temple",
+    "rating": 4.7,
+    "latitude": 28.6127,
+    "longitude": 77.2773,
+    "description": "A massive spiritual-cultural campus displaying traditional Hindu architecture, gardens, and light shows.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Akshardham_Gandhinagar_Gujarat.jpg/960px-Akshardham_Gandhinagar_Gujarat.jpg"
+  },
+  {
+    "name": "Jama Masjid",
+    "city": "Delhi",
+    "category": "history",
+    "rating": 4.5,
+    "latitude": 28.6507,
+    "longitude": 77.2334,
+    "description": "One of the largest mosques in India, built by Shah Jahan with impressive red sandstone and white marble.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Jama_Masjid_-_In_the_Noon.jpg/960px-Jama_Masjid_-_In_the_Noon.jpg"
+  },
+  {
+    "name": "Chandni Chowk",
+    "city": "Delhi",
+    "category": "culture",
+    "rating": 4.4,
+    "latitude": 28.656,
+    "longitude": 77.2303,
+    "description": "One of Delhi's oldest and busiest markets, famous for street food, traditional shopping, and narrow alleys.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Gurudwara_Sisganj_Sahib_Chandni_Chowk_19.jpg/960px-Gurudwara_Sisganj_Sahib_Chandni_Chowk_19.jpg"
+  },
+  {
+    "name": "Rashtrapati Bhavan",
+    "city": "Delhi",
+    "category": "history",
+    "rating": 4.6,
+    "latitude": 28.6143,
+    "longitude": 77.1995,
+    "description": "The official residence of the President of India, featuring grand architectural domes and Mughal Gardens.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Rashtrapati_Bhavan_Logo_Residence.png/960px-Rashtrapati_Bhavan_Logo_Residence.png"
+  },
+  {
+    "name": "Lodhi Garden",
+    "city": "Delhi",
+    "category": "nature",
+    "rating": 4.6,
+    "latitude": 28.593,
+    "longitude": 77.2197,
+    "description": "A peaceful city park containing the tombs of the Sayyid and Lodi dynasties, popular for morning walks.",
+    "image": "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Taj Mahal",
+    "city": "Agra",
+    "category": "history",
+    "rating": 4.9,
+    "latitude": 27.1751,
+    "longitude": 78.0421,
+    "description": "The world-famous white marble mausoleum on the banks of Yamuna, built by Shah Jahan in memory of Mumtaz Mahal.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Taj_Mahal_%28Edited%29.jpeg/960px-Taj_Mahal_%28Edited%29.jpeg"
+  },
+  {
+    "name": "Agra Fort",
+    "city": "Agra",
+    "category": "history",
+    "rating": 4.7,
+    "latitude": 27.1795,
+    "longitude": 78.0211,
+    "description": "A massive 16th-century red sandstone fortress that served as the primary residence of the Mughal emperors.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Agra_03-2016_10_Agra_Fort.jpg/960px-Agra_03-2016_10_Agra_Fort.jpg"
+  },
+  {
+    "name": "Mehtab Bagh",
+    "city": "Agra",
+    "category": "nature",
+    "rating": 4.5,
+    "latitude": 27.1796,
+    "longitude": 78.0421,
+    "description": "A serene garden complex situated opposite the Taj Mahal, offering perfect sunset view photography.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Mehtab_Bagh_facing_Taj_Mahal.JPG/960px-Mehtab_Bagh_facing_Taj_Mahal.JPG"
+  },
+  {
+    "name": "Fatehpur Sikri",
+    "city": "Agra",
+    "category": "history",
+    "rating": 4.6,
+    "latitude": 27.0945,
+    "longitude": 77.667,
+    "description": "A ghost city of red sandstone ruins founded by Emperor Akbar, featuring Buland Darwaza.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Fatehput_Sikiri_Buland_Darwaza_gate_2010.jpg/960px-Fatehput_Sikiri_Buland_Darwaza_gate_2010.jpg"
+  },
+  {
+    "name": "Itmad-ud-Daulah",
+    "city": "Agra",
+    "category": "history",
+    "rating": 4.5,
+    "latitude": 27.1928,
+    "longitude": 78.031,
+    "description": "Often called the 'Baby Taj', this exquisite marble tomb is renowned for its delicate stone inlay work.",
+    "image": "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Jama Masjid Agra",
+    "city": "Agra",
+    "category": "temple",
+    "rating": 4.4,
+    "latitude": 27.1829,
+    "longitude": 78.01,
+    "description": "One of the largest mosques in India, built by Shah Jahan with impressive red sandstone and white marble.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Moti_Masjid%2CAgra.jpg/960px-Moti_Masjid%2CAgra.jpg"
+  },
+  {
+    "name": "Akbar's Tomb",
+    "city": "Agra",
+    "category": "history",
+    "rating": 4.4,
+    "latitude": 27.2205,
+    "longitude": 77.95,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Akbar%27s_Tomb_in_Sikandra_15.jpg/960px-Akbar%27s_Tomb_in_Sikandra_15.jpg"
+  },
+  {
+    "name": "Mankameshwar Temple",
+    "city": "Agra",
+    "category": "temple",
+    "rating": 4.3,
+    "latitude": 27.1821,
+    "longitude": 78.0155,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/IAshishTripathi_Mankameshwar_Temple_Agra.jpg/960px-IAshishTripathi_Mankameshwar_Temple_Agra.jpg"
+  },
+  {
+    "name": "Anguri Bagh",
+    "city": "Agra",
+    "category": "nature",
+    "rating": 4.3,
+    "latitude": 27.1797,
+    "longitude": 78.0213,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Wildlife SOS",
+    "city": "Agra",
+    "category": "nature",
+    "rating": 4.6,
+    "latitude": 27.258,
+    "longitude": 77.875,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Gateway of India",
+    "city": "Mumbai",
+    "category": "history",
+    "rating": 4.7,
+    "latitude": 18.922,
+    "longitude": 72.8347,
+    "description": "An iconic 26-meter arch monument built to commemorate the visit of King George V, overlooking the Arabian Sea.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Mumbai_03-2016_30_Gateway_of_India.jpg/960px-Mumbai_03-2016_30_Gateway_of_India.jpg"
+  },
+  {
+    "name": "Marine Drive",
+    "city": "Mumbai",
+    "category": "nature",
+    "rating": 4.8,
+    "latitude": 18.944,
+    "longitude": 72.8238,
+    "description": "A scenic 3.6 km promenade along the coast, popular for evening walks and viewing the glowing 'Queen's Necklace'.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Mumbai_03-2016_27_skyline_at_Marine_Drive.jpg/960px-Mumbai_03-2016_27_skyline_at_Marine_Drive.jpg"
+  },
+  {
+    "name": "Elephanta Caves",
+    "city": "Mumbai",
+    "category": "history",
+    "rating": 4.5,
+    "latitude": 18.9633,
+    "longitude": 72.931,
+    "description": "A network of sculpted cave temples on Elephanta Island, dedicated primarily to the Hindu god Shiva.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Elephanta_Caves_Trimurti.jpg/960px-Elephanta_Caves_Trimurti.jpg"
+  },
+  {
+    "name": "Juhu Beach",
+    "city": "Mumbai",
+    "category": "nature",
+    "rating": 4.3,
+    "latitude": 19.0988,
+    "longitude": 72.8267,
+    "description": "One of Mumbai's most popular beaches, famous for its lively atmosphere and delicious local street food.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Juhu_beach_%28Arial%29.jpg/960px-Juhu_beach_%28Arial%29.jpg"
+  },
+  {
+    "name": "Siddhivinayak Temple",
+    "city": "Mumbai",
+    "category": "temple",
+    "rating": 4.8,
+    "latitude": 19.0168,
+    "longitude": 72.83,
+    "description": "A highly revered temple dedicated to Lord Ganesha, attracting thousands of devotees and tourists daily.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Shree_Siddhivinayak_Temple_Mumbai.jpg/960px-Shree_Siddhivinayak_Temple_Mumbai.jpg"
+  },
+  {
+    "name": "Chhatrapati Shivaji Terminus",
+    "city": "Mumbai",
+    "category": "history",
+    "rating": 4.6,
+    "latitude": 18.9402,
+    "longitude": 72.8356,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Chhatrapati_shivaji_terminus%2C_esterno_01.jpg/960px-Chhatrapati_shivaji_terminus%2C_esterno_01.jpg"
+  },
+  {
+    "name": "Haji Ali Dargah",
+    "city": "Mumbai",
+    "category": "temple",
+    "rating": 4.6,
+    "latitude": 18.9828,
+    "longitude": 72.8085,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Mumbai_03-2016_12_Haji_Ali_Dargah.jpg/960px-Mumbai_03-2016_12_Haji_Ali_Dargah.jpg"
+  },
+  {
+    "name": "Sanjay Gandhi National Park",
+    "city": "Mumbai",
+    "category": "nature",
+    "rating": 4.5,
+    "latitude": 19.2147,
+    "longitude": 72.9106,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/4/4b/SGNP-Bombay.jpg"
+  },
+  {
+    "name": "Colaba Causeway",
+    "city": "Mumbai",
+    "category": "culture",
+    "rating": 4.4,
+    "latitude": 18.9235,
+    "longitude": 72.8303,
+    "description": "A lively cultural hub where visitors can experience traditional lifestyles, local crafts, and delicious street food.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Singapore-Johor_Causeway.jpg/960px-Singapore-Johor_Causeway.jpg"
+  },
+  {
+    "name": "Bandra Fort",
+    "city": "Mumbai",
+    "category": "history",
+    "rating": 4.4,
+    "latitude": 19.046,
+    "longitude": 72.8193,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Bandra_Worli_Sea_Link_at_night.jpg/960px-Bandra_Worli_Sea_Link_at_night.jpg"
+  },
+  {
+    "name": "Baga Beach",
+    "city": "Goa",
+    "category": "nature",
+    "rating": 4.6,
+    "latitude": 15.5553,
+    "longitude": 73.7517,
+    "description": "A lively beach in North Goa, famous for its energetic nightlife, water sports, and beach shacks.",
+    "image": "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Calangute Beach",
+    "city": "Goa",
+    "category": "nature",
+    "rating": 4.5,
+    "latitude": 15.5439,
+    "longitude": 73.7553,
+    "description": "Known as the 'Queen of Beaches', it is the largest and most popular beach in North Goa.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Sunset_at_Calangute.jpg/960px-Sunset_at_Calangute.jpg"
+  },
+  {
+    "name": "Dudhsagar Falls",
+    "city": "Goa",
+    "category": "nature",
+    "rating": 4.7,
+    "latitude": 15.3144,
+    "longitude": 74.3143,
+    "description": "A majestic four-tiered waterfall on the Mandovi River, looking like a cascading sea of milk.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Doodhsagar_Fall.jpg/960px-Doodhsagar_Fall.jpg"
+  },
+  {
+    "name": "Fort Aguada",
+    "city": "Goa",
+    "category": "history",
+    "rating": 4.6,
+    "latitude": 15.4989,
+    "longitude": 73.7736,
+    "description": "A well-preserved 17th-century Portuguese fort and lighthouse overlooking the meeting point of Mandovi River and sea.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Fort_aguada.jpg/960px-Fort_aguada.jpg"
+  },
+  {
+    "name": "Basilica of Bom Jesus",
+    "city": "Goa",
+    "category": "church",
+    "rating": 4.7,
+    "latitude": 15.5009,
+    "longitude": 73.9115,
+    "description": "A historic world heritage church holding the mortal remains of St. Francis Xavier.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Front_Elevation_of_Basilica_of_Bom_Jesus.jpg/960px-Front_Elevation_of_Basilica_of_Bom_Jesus.jpg"
+  },
+  {
+    "name": "Anjuna Beach",
+    "city": "Goa",
+    "category": "nature",
+    "rating": 4.4,
+    "latitude": 15.5746,
+    "longitude": 73.7407,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Anjuna_Beach%2C_Goa%2C_India%2C_Legendary_Curlies_beach_shack.jpg/960px-Anjuna_Beach%2C_Goa%2C_India%2C_Legendary_Curlies_beach_shack.jpg"
+  },
+  {
+    "name": "Chapora Fort",
+    "city": "Goa",
+    "category": "history",
+    "rating": 4.5,
+    "latitude": 15.5995,
+    "longitude": 73.735,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Fort_Chapora_26012016.jpg/960px-Fort_Chapora_26012016.jpg"
+  },
+  {
+    "name": "Colva Beach",
+    "city": "Goa",
+    "category": "nature",
+    "rating": 4.4,
+    "latitude": 15.2792,
+    "longitude": 73.9228,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/0/06/Colv%C3%A1_beach.jpg"
+  },
+  {
+    "name": "Vagator Beach",
+    "city": "Goa",
+    "category": "nature",
+    "rating": 4.5,
+    "latitude": 15.5977,
+    "longitude": 73.734,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Se Cathedral",
+    "city": "Goa",
+    "category": "church",
+    "rating": 4.6,
+    "latitude": 15.5033,
+    "longitude": 73.9112,
+    "description": "A historic sanctuary displaying beautiful colonial architecture, stained glass, and tranquil interiors.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Se_Cathedral_from_Rua_Direita.jpg/960px-Se_Cathedral_from_Rua_Direita.jpg"
+  },
+  {
+    "name": "Kashi Vishwanath Temple",
+    "city": "Varanasi",
+    "category": "temple",
+    "rating": 4.8,
+    "latitude": 25.3109,
+    "longitude": 83.0107,
+    "description": "One of the most famous Hindu temples dedicated to Lord Shiva, located on the sacred western bank of the Ganges.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/f/ff/Kashi_Vishwanath.jpg"
+  },
+  {
+    "name": "Dashashwamedh Ghat",
+    "city": "Varanasi",
+    "category": "culture",
+    "rating": 4.7,
+    "latitude": 25.3093,
+    "longitude": 83.01,
+    "description": "The main and most spectacular ghat on the Ganges River, famous for the magnificent evening Ganga Aarti ceremony.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Dasaswamedh_ghat-varanasi_india-andres_larin.jpg/960px-Dasaswamedh_ghat-varanasi_india-andres_larin.jpg"
+  },
+  {
+    "name": "Assi Ghat",
+    "city": "Varanasi",
+    "category": "culture",
+    "rating": 4.6,
+    "latitude": 25.287,
+    "longitude": 83.0053,
+    "description": "A prominent ghat located at the confluence of the Ganga and Assi rivers, popular for morning yoga and rituals.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Assi_Ghat_Varanasi_morning_Aarti.jpg/960px-Assi_Ghat_Varanasi_morning_Aarti.jpg"
+  },
+  {
+    "name": "Sarnath",
+    "city": "Varanasi",
+    "category": "history",
+    "rating": 4.6,
+    "latitude": 25.3766,
+    "longitude": 83.0222,
+    "description": "The holy site where Lord Buddha gave his first sermon after attaining enlightenment.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Ancient_Buddhist_monasteries_near_Dhamekh_Stupa_Monument_Site%2C_Sarnath.jpg/960px-Ancient_Buddhist_monasteries_near_Dhamekh_Stupa_Monument_Site%2C_Sarnath.jpg"
+  },
+  {
+    "name": "Manikarnika Ghat",
+    "city": "Varanasi",
+    "category": "culture",
+    "rating": 4.5,
+    "latitude": 25.3103,
+    "longitude": 83.0123,
+    "description": "A lively cultural hub where visitors can experience traditional lifestyles, local crafts, and delicious street food.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Manikarnika_Ghat%2C_Varanasi%2C_Uttar_Pradesh%2C_India_%282011%29_5.jpg/960px-Manikarnika_Ghat%2C_Varanasi%2C_Uttar_Pradesh%2C_India_%282011%29_5.jpg"
+  },
+  {
+    "name": "Ramnagar Fort",
+    "city": "Varanasi",
+    "category": "history",
+    "rating": 4.4,
+    "latitude": 25.2694,
+    "longitude": 83.0248,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Entrance_area_of_Ramnagar_Fort.jpg/960px-Entrance_area_of_Ramnagar_Fort.jpg"
+  },
+  {
+    "name": "Bharat Mata Temple",
+    "city": "Varanasi",
+    "category": "temple",
+    "rating": 4.3,
+    "latitude": 25.3156,
+    "longitude": 82.9739,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Bharat_Mata_by_Abanindranath_Tagore.jpg/960px-Bharat_Mata_by_Abanindranath_Tagore.jpg"
+  },
+  {
+    "name": "Tulsi Manas Temple",
+    "city": "Varanasi",
+    "category": "temple",
+    "rating": 4.4,
+    "latitude": 25.2953,
+    "longitude": 83.001,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Manas_Mandir.jpg/960px-Manas_Mandir.jpg"
+  },
+  {
+    "name": "Banaras Hindu University",
+    "city": "Varanasi",
+    "category": "culture",
+    "rating": 4.6,
+    "latitude": 25.2677,
+    "longitude": 82.9913,
+    "description": "A lively cultural hub where visitors can experience traditional lifestyles, local crafts, and delicious street food.",
+    "image": "https://upload.wikimedia.org/wikipedia/en/2/21/Institute_Of_Medical_Sciences_BHU.jpg"
+  },
+  {
+    "name": "Alamgir Mosque",
+    "city": "Varanasi",
+    "category": "history",
+    "rating": 4.3,
+    "latitude": 25.312,
+    "longitude": 83.0137,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/0/0c/Alamgir_Mosque_by_the_Ganges_ghats%2C_Varanasi.jpg"
+  },
+  {
+    "name": "City Palace Udaipur",
+    "city": "Udaipur",
+    "category": "history",
+    "rating": 4.8,
+    "latitude": 24.5764,
+    "longitude": 73.6839,
+    "description": "A grand royal palace complex displaying a blend of Rajasthani and Mughal architecture with exquisite museums.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Udaipur_City_Palace.jpg/960px-Udaipur_City_Palace.jpg"
+  },
+  {
+    "name": "Lake Pichola",
+    "city": "Udaipur",
+    "category": "nature",
+    "rating": 4.7,
+    "latitude": 24.5795,
+    "longitude": 73.6798,
+    "description": "A scenic artificial freshwater lake, famous for the white marble Lake Palace floating in its center.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Udaipur_Lake_India.JPG/960px-Udaipur_Lake_India.JPG"
+  },
+  {
+    "name": "Jag Mandir",
+    "city": "Udaipur",
+    "category": "history",
+    "rating": 4.6,
+    "latitude": 24.5769,
+    "longitude": 73.6782,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/JagMandir.jpg/960px-JagMandir.jpg"
+  },
+  {
+    "name": "Sajjangarh Palace",
+    "city": "Udaipur",
+    "category": "history",
+    "rating": 4.6,
+    "latitude": 24.5906,
+    "longitude": 73.6825,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://images.unsplash.com/photo-1603262110263-fb0112e7cc33?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Saheliyon Ki Bari",
+    "city": "Udaipur",
+    "category": "nature",
+    "rating": 4.5,
+    "latitude": 24.5992,
+    "longitude": 73.6891,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Saheliyon-ki-Bari_Fountain.JPG/960px-Saheliyon-ki-Bari_Fountain.JPG"
+  },
+  {
+    "name": "Bagore Ki Haveli",
+    "city": "Udaipur",
+    "category": "culture",
+    "rating": 4.6,
+    "latitude": 24.5778,
+    "longitude": 73.6833,
+    "description": "A lively cultural hub where visitors can experience traditional lifestyles, local crafts, and delicious street food.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/9/96/Bagore_ki_Haveli%2C_Rajasthan.jpg"
+  },
+  {
+    "name": "Fateh Sagar Lake",
+    "city": "Udaipur",
+    "category": "nature",
+    "rating": 4.7,
+    "latitude": 24.6015,
+    "longitude": 73.6795,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/5/50/Fatehsagar_nehrugarden.jpg"
+  },
+  {
+    "name": "Jagdish Temple",
+    "city": "Udaipur",
+    "category": "temple",
+    "rating": 4.6,
+    "latitude": 24.5774,
+    "longitude": 73.6824,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Jagdish_Temple_Udaipur.jpg/960px-Jagdish_Temple_Udaipur.jpg"
+  },
+  {
+    "name": "Ahar Cenotaphs",
+    "city": "Udaipur",
+    "category": "history",
+    "rating": 4.4,
+    "latitude": 24.585,
+    "longitude": 73.735,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Ahar_Cenotaphs.JPG/960px-Ahar_Cenotaphs.JPG"
+  },
+  {
+    "name": "Shilpgram",
+    "city": "Udaipur",
+    "category": "culture",
+    "rating": 4.5,
+    "latitude": 24.6105,
+    "longitude": 73.6955,
+    "description": "A lively cultural hub where visitors can experience traditional lifestyles, local crafts, and delicious street food.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Mandana_art_work_at_shilpgram.JPG/960px-Mandana_art_work_at_shilpgram.JPG"
+  },
+  {
+    "name": "Mehrangarh Fort",
+    "city": "Jodhpur",
+    "category": "history",
+    "rating": 4.8,
+    "latitude": 26.2978,
+    "longitude": 73.0186,
+    "description": "One of India's largest forts, rising 400 feet above Jodhpur, featuring carved courtyards and weapons galleries.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Mehrangarh_Fort_sanhita.jpg/960px-Mehrangarh_Fort_sanhita.jpg"
+  },
+  {
+    "name": "Umaid Bhawan Palace",
+    "city": "Jodhpur",
+    "category": "history",
+    "rating": 4.7,
+    "latitude": 26.2845,
+    "longitude": 73.0479,
+    "description": "One of the world's largest private residences, part of which is a museum showcasing royal history and vintage cars.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/1996_-218-20A_Jodhpur_Hotel_Umaid_Bhawan_Palace_%282233393509%29.jpg/960px-1996_-218-20A_Jodhpur_Hotel_Umaid_Bhawan_Palace_%282233393509%29.jpg"
+  },
+  {
+    "name": "Jaswant Thada",
+    "city": "Jodhpur",
+    "category": "history",
+    "rating": 4.6,
+    "latitude": 26.2992,
+    "longitude": 73.0353,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Jaswant_Thada_Dawn.jpg/960px-Jaswant_Thada_Dawn.jpg"
+  },
+  {
+    "name": "Clock Tower",
+    "city": "Jodhpur",
+    "category": "culture",
+    "rating": 4.4,
+    "latitude": 26.2926,
+    "longitude": 73.0243,
+    "description": "A lively cultural hub where visitors can experience traditional lifestyles, local crafts, and delicious street food.",
+    "image": "https://upload.wikimedia.org/wikipedia/en/thumb/a/a4/Abraj_Al_Bait_Tower_2017.jpg/960px-Abraj_Al_Bait_Tower_2017.jpg"
+  },
+  {
+    "name": "Mandore Gardens",
+    "city": "Jodhpur",
+    "category": "nature",
+    "rating": 4.3,
+    "latitude": 26.3521,
+    "longitude": 73.0386,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Temples_at_Mandor_%284571805346%29.jpg/960px-Temples_at_Mandor_%284571805346%29.jpg"
+  },
+  {
+    "name": "Kaylana Lake",
+    "city": "Jodhpur",
+    "category": "nature",
+    "rating": 4.4,
+    "latitude": 26.2863,
+    "longitude": 72.9739,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Kaylana.JPG/960px-Kaylana.JPG"
+  },
+  {
+    "name": "Toorji Ka Jhalra",
+    "city": "Jodhpur",
+    "category": "history",
+    "rating": 4.5,
+    "latitude": 26.292,
+    "longitude": 73.0235,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://images.unsplash.com/photo-1548013146-72479768bada?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Balsamand Lake",
+    "city": "Jodhpur",
+    "category": "nature",
+    "rating": 4.3,
+    "latitude": 26.3331,
+    "longitude": 73.0417,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1548013146-72479768bada?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Osian Temples",
+    "city": "Jodhpur",
+    "category": "temple",
+    "rating": 4.5,
+    "latitude": 26.736,
+    "longitude": 72.9166,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://images.unsplash.com/photo-1548013146-72479768bada?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Rao Jodha Desert Rock Park",
+    "city": "Jodhpur",
+    "category": "nature",
+    "rating": 4.6,
+    "latitude": 26.2985,
+    "longitude": 73.0202,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Mehrangarh_RaoJodhaDNP_DSC0158.jpg/960px-Mehrangarh_RaoJodhaDNP_DSC0158.jpg"
+  },
+  {
+    "name": "Solang Valley",
+    "city": "Manali",
+    "category": "nature",
+    "rating": 4.7,
+    "latitude": 32.316,
+    "longitude": 77.154,
+    "description": "A beautiful side valley offering adventure sports like paragliding, skiing, and Zorbing amidst mountain peaks.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Solang_Valley_%2CManali%2C_Himachal_Pardes%2C_India.JPG/960px-Solang_Valley_%2CManali%2C_Himachal_Pardes%2C_India.JPG"
+  },
+  {
+    "name": "Rohtang Pass",
+    "city": "Manali",
+    "category": "nature",
+    "rating": 4.8,
+    "latitude": 32.3713,
+    "longitude": 77.246,
+    "description": "A spectacular high mountain pass offering snow-covered vistas and dramatic views of the Himalayas.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Kullu_Valley_from_Rohtang_Pass%2C_India.jpg/960px-Kullu_Valley_from_Rohtang_Pass%2C_India.jpg"
+  },
+  {
+    "name": "Hadimba Temple",
+    "city": "Manali",
+    "category": "temple",
+    "rating": 4.6,
+    "latitude": 32.2432,
+    "longitude": 77.1892,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://images.unsplash.com/photo-1605647540924-852290f6b0d5?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Manu Temple",
+    "city": "Manali",
+    "category": "temple",
+    "rating": 4.5,
+    "latitude": 32.2523,
+    "longitude": 77.187,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Buddha_and_Manu_Temples.jpg/960px-Buddha_and_Manu_Temples.jpg"
+  },
+  {
+    "name": "Old Manali",
+    "city": "Manali",
+    "category": "culture",
+    "rating": 4.6,
+    "latitude": 32.2516,
+    "longitude": 77.1872,
+    "description": "A lively cultural hub where visitors can experience traditional lifestyles, local crafts, and delicious street food.",
+    "image": "https://images.unsplash.com/photo-1605647540924-852290f6b0d5?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Jogini Waterfall",
+    "city": "Manali",
+    "category": "nature",
+    "rating": 4.5,
+    "latitude": 32.269,
+    "longitude": 77.1852,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1605647540924-852290f6b0d5?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Mall Road Manali",
+    "city": "Manali",
+    "category": "culture",
+    "rating": 4.4,
+    "latitude": 32.2396,
+    "longitude": 77.1887,
+    "description": "A lively cultural hub where visitors can experience traditional lifestyles, local crafts, and delicious street food.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Manali-mall-road.webp/960px-Manali-mall-road.webp.png"
+  },
+  {
+    "name": "Vashisht Temple",
+    "city": "Manali",
+    "category": "temple",
+    "rating": 4.4,
+    "latitude": 32.2453,
+    "longitude": 77.1913,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://images.unsplash.com/photo-1605647540924-852290f6b0d5?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Beas River",
+    "city": "Manali",
+    "category": "nature",
+    "rating": 4.6,
+    "latitude": 32.24,
+    "longitude": 77.19,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Beas_River_at_Kullu%2C_Himachal_Pradesh.jpg/960px-Beas_River_at_Kullu%2C_Himachal_Pradesh.jpg"
+  },
+  {
+    "name": "Naggar Castle",
+    "city": "Manali",
+    "category": "history",
+    "rating": 4.5,
+    "latitude": 32.1191,
+    "longitude": 77.167,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://images.unsplash.com/photo-1605647540924-852290f6b0d5?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "The Ridge",
+    "city": "Shimla",
+    "category": "nature",
+    "rating": 4.7,
+    "latitude": 31.1048,
+    "longitude": 77.1734,
+    "description": "A spacious open space in the heart of Shimla, offering stunning views of snow-clad mountain ranges.",
+    "image": "https://images.unsplash.com/photo-1597074866923-dc0589150358?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Mall Road Shimla",
+    "city": "Shimla",
+    "category": "culture",
+    "rating": 4.6,
+    "latitude": 31.1048,
+    "longitude": 77.1724,
+    "description": "A lively cultural hub where visitors can experience traditional lifestyles, local crafts, and delicious street food.",
+    "image": "https://images.unsplash.com/photo-1597074866923-dc0589150358?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Jakhoo Temple",
+    "city": "Shimla",
+    "category": "temple",
+    "rating": 4.5,
+    "latitude": 31.1054,
+    "longitude": 77.183,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://images.unsplash.com/photo-1597074866923-dc0589150358?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Kufri",
+    "city": "Shimla",
+    "category": "nature",
+    "rating": 4.6,
+    "latitude": 31.0978,
+    "longitude": 77.2671,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1597074866923-dc0589150358?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Christ Church",
+    "city": "Shimla",
+    "category": "church",
+    "rating": 4.5,
+    "latitude": 31.1048,
+    "longitude": 77.1733,
+    "description": "A historic sanctuary displaying beautiful colonial architecture, stained glass, and tranquil interiors.",
+    "image": "https://images.unsplash.com/photo-1597074866923-dc0589150358?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Summer Hill",
+    "city": "Shimla",
+    "category": "nature",
+    "rating": 4.4,
+    "latitude": 31.0993,
+    "longitude": 77.1407,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1597074866923-dc0589150358?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Chadwick Falls",
+    "city": "Shimla",
+    "category": "nature",
+    "rating": 4.3,
+    "latitude": 31.1023,
+    "longitude": 77.157,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1597074866923-dc0589150358?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Scandal Point",
+    "city": "Shimla",
+    "category": "culture",
+    "rating": 4.4,
+    "latitude": 31.1047,
+    "longitude": 77.1722,
+    "description": "A lively cultural hub where visitors can experience traditional lifestyles, local crafts, and delicious street food.",
+    "image": "https://images.unsplash.com/photo-1597074866923-dc0589150358?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Tara Devi Temple",
+    "city": "Shimla",
+    "category": "temple",
+    "rating": 4.4,
+    "latitude": 31.0733,
+    "longitude": 77.1435,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://images.unsplash.com/photo-1597074866923-dc0589150358?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Green Valley",
+    "city": "Shimla",
+    "category": "nature",
+    "rating": 4.6,
+    "latitude": 31.1207,
+    "longitude": 77.189,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1597074866923-dc0589150358?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Golden Temple",
+    "city": "Amritsar",
+    "category": "temple",
+    "rating": 4.9,
+    "latitude": 31.62,
+    "longitude": 74.8765,
+    "description": "The holiest Gurdwara of Sikhism, a gilded temple reflecting beautifully in its surrounding sacred pool.",
+    "image": "https://images.unsplash.com/photo-1514222134-b57cbb8ce073?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Jallianwala Bagh",
+    "city": "Amritsar",
+    "category": "history",
+    "rating": 4.7,
+    "latitude": 31.6207,
+    "longitude": 74.88,
+    "description": "A poignant memorial park commemorating the peaceful protesters massacred by British troops in 1919.",
+    "image": "https://images.unsplash.com/photo-1514222134-b57cbb8ce073?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Wagah Border",
+    "city": "Amritsar",
+    "category": "culture",
+    "rating": 4.7,
+    "latitude": 31.6046,
+    "longitude": 74.5733,
+    "description": "The border crossing between India and Pakistan, famous for its daily military drill and retreat ceremony.",
+    "image": "https://images.unsplash.com/photo-1514222134-b57cbb8ce073?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Partition Museum",
+    "city": "Amritsar",
+    "category": "museum",
+    "rating": 4.6,
+    "latitude": 31.6222,
+    "longitude": 74.8767,
+    "description": "A treasure trove of art, history, and cultural artifacts representing the rich heritage of the city.",
+    "image": "https://images.unsplash.com/photo-1514222134-b57cbb8ce073?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Durgiana Temple",
+    "city": "Amritsar",
+    "category": "temple",
+    "rating": 4.5,
+    "latitude": 31.6234,
+    "longitude": 74.8783,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://images.unsplash.com/photo-1514222134-b57cbb8ce073?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Akal Takht",
+    "city": "Amritsar",
+    "category": "temple",
+    "rating": 4.8,
+    "latitude": 31.6201,
+    "longitude": 74.8763,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://images.unsplash.com/photo-1514222134-b57cbb8ce073?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Gobindgarh Fort",
+    "city": "Amritsar",
+    "category": "history",
+    "rating": 4.5,
+    "latitude": 31.626,
+    "longitude": 74.881,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://images.unsplash.com/photo-1514222134-b57cbb8ce073?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Ram Bagh Garden",
+    "city": "Amritsar",
+    "category": "nature",
+    "rating": 4.3,
+    "latitude": 31.6272,
+    "longitude": 74.8731,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1514222134-b57cbb8ce073?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Maharaja Ranjit Singh Museum",
+    "city": "Amritsar",
+    "category": "museum",
+    "rating": 4.4,
+    "latitude": 31.6275,
+    "longitude": 74.8734,
+    "description": "A treasure trove of art, history, and cultural artifacts representing the rich heritage of the city.",
+    "image": "https://images.unsplash.com/photo-1514222134-b57cbb8ce073?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Hall Bazaar",
+    "city": "Amritsar",
+    "category": "culture",
+    "rating": 4.4,
+    "latitude": 31.624,
+    "longitude": 74.875,
+    "description": "A lively cultural hub where visitors can experience traditional lifestyles, local crafts, and delicious street food.",
+    "image": "https://images.unsplash.com/photo-1514222134-b57cbb8ce073?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Laxman Jhula",
+    "city": "Rishikesh",
+    "category": "culture",
+    "rating": 4.6,
+    "latitude": 30.131,
+    "longitude": 78.329,
+    "description": "An iconic iron suspension bridge across the holy Ganges River, associated with mythological legends.",
+    "image": "https://images.unsplash.com/photo-1605647540924-852290f6b0d5?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Ram Jhula",
+    "city": "Rishikesh",
+    "category": "culture",
+    "rating": 4.6,
+    "latitude": 30.1223,
+    "longitude": 78.3295,
+    "description": "A beautiful suspension bridge crossing the Ganges, connecting famous ashrams and temples.",
+    "image": "https://images.unsplash.com/photo-1605647540924-852290f6b0d5?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Triveni Ghat",
+    "city": "Rishikesh",
+    "category": "culture",
+    "rating": 4.5,
+    "latitude": 30.1083,
+    "longitude": 78.292,
+    "description": "A lively cultural hub where visitors can experience traditional lifestyles, local crafts, and delicious street food.",
+    "image": "https://images.unsplash.com/photo-1605647540924-852290f6b0d5?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Neelkanth Mahadev Temple",
+    "city": "Rishikesh",
+    "category": "temple",
+    "rating": 4.7,
+    "latitude": 30.1288,
+    "longitude": 78.3362,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://images.unsplash.com/photo-1605647540924-852290f6b0d5?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Beatles Ashram",
+    "city": "Rishikesh",
+    "category": "history",
+    "rating": 4.5,
+    "latitude": 30.1228,
+    "longitude": 78.3272,
+    "description": "The ruins of the ashram where the Beatles stayed in 1968, now covered in vibrant wall art and graffiti.",
+    "image": "https://images.unsplash.com/photo-1605647540924-852290f6b0d5?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Parmarth Niketan",
+    "city": "Rishikesh",
+    "category": "temple",
+    "rating": 4.6,
+    "latitude": 30.1245,
+    "longitude": 78.3291,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://images.unsplash.com/photo-1605647540924-852290f6b0d5?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Rajaji National Park",
+    "city": "Rishikesh",
+    "category": "nature",
+    "rating": 4.5,
+    "latitude": 30.0156,
+    "longitude": 78.17,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1605647540924-852290f6b0d5?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Shivpuri",
+    "city": "Rishikesh",
+    "category": "nature",
+    "rating": 4.6,
+    "latitude": 30.1323,
+    "longitude": 78.3678,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1605647540924-852290f6b0d5?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Vashishta Cave",
+    "city": "Rishikesh",
+    "category": "nature",
+    "rating": 4.5,
+    "latitude": 30.085,
+    "longitude": 78.388,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1605647540924-852290f6b0d5?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Patna Waterfall",
+    "city": "Rishikesh",
+    "category": "nature",
+    "rating": 4.4,
+    "latitude": 30.1318,
+    "longitude": 78.325,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1605647540924-852290f6b0d5?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Lalbagh Botanical Garden",
+    "city": "Bangalore",
+    "category": "nature",
+    "rating": 4.7,
+    "latitude": 12.9507,
+    "longitude": 77.5848,
+    "description": "A historic 240-acre botanical garden containing India's largest collection of tropical plants and a Glass House.",
+    "image": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Cubbon Park",
+    "city": "Bangalore",
+    "category": "nature",
+    "rating": 4.6,
+    "latitude": 12.9763,
+    "longitude": 77.5929,
+    "description": "A lush 300-acre park in Bangalore's administrative area, providing a peaceful green escape.",
+    "image": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Bangalore Palace",
+    "city": "Bangalore",
+    "category": "history",
+    "rating": 4.4,
+    "latitude": 12.9987,
+    "longitude": 77.592,
+    "description": "A grand royal palace inspired by Windsor Castle, displaying classic wooden carvings and historical photos.",
+    "image": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "ISKCON Temple",
+    "city": "Bangalore",
+    "category": "temple",
+    "rating": 4.7,
+    "latitude": 13.0109,
+    "longitude": 77.5511,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Wonderla",
+    "city": "Bangalore",
+    "category": "adventure",
+    "rating": 4.5,
+    "latitude": 12.8342,
+    "longitude": 77.401,
+    "description": "An exciting spot offering thrill-seeking outdoor activities, panoramic views, and memorable fun.",
+    "image": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Bannerghatta National Park",
+    "city": "Bangalore",
+    "category": "nature",
+    "rating": 4.5,
+    "latitude": 12.8006,
+    "longitude": 77.577,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Commercial Street",
+    "city": "Bangalore",
+    "category": "culture",
+    "rating": 4.4,
+    "latitude": 12.9716,
+    "longitude": 77.6102,
+    "description": "A lively cultural hub where visitors can experience traditional lifestyles, local crafts, and delicious street food.",
+    "image": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Vidhana Soudha",
+    "city": "Bangalore",
+    "category": "history",
+    "rating": 4.5,
+    "latitude": 12.9795,
+    "longitude": 77.59,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Ulsoor Lake",
+    "city": "Bangalore",
+    "category": "nature",
+    "rating": 4.3,
+    "latitude": 12.9784,
+    "longitude": 77.618,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Nandi Hills",
+    "city": "Bangalore",
+    "category": "nature",
+    "rating": 4.6,
+    "latitude": 13.3702,
+    "longitude": 77.6838,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Charminar",
+    "city": "Hyderabad",
+    "category": "history",
+    "rating": 4.7,
+    "latitude": 17.3616,
+    "longitude": 78.4747,
+    "description": "An iconic 16th-century mosque and monument featuring four ornate minarets, situated in the heart of Hyderabad.",
+    "image": "https://images.unsplash.com/photo-1581888227599-779811939961?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Golconda Fort",
+    "city": "Hyderabad",
+    "category": "history",
+    "rating": 4.6,
+    "latitude": 17.3833,
+    "longitude": 78.4011,
+    "description": "A historic fortress complex famous for its acoustic engineering, diamond vaults, and massive ruins.",
+    "image": "https://images.unsplash.com/photo-1581888227599-779811939961?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Ramoji Film City",
+    "city": "Hyderabad",
+    "category": "adventure",
+    "rating": 4.6,
+    "latitude": 17.2543,
+    "longitude": 78.6808,
+    "description": "The largest integrated film studio complex in the world, featuring tours, sets, and theme parks.",
+    "image": "https://images.unsplash.com/photo-1581888227599-779811939961?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Hussain Sagar Lake",
+    "city": "Hyderabad",
+    "category": "nature",
+    "rating": 4.5,
+    "latitude": 17.4239,
+    "longitude": 78.4738,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1581888227599-779811939961?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Salar Jung Museum",
+    "city": "Hyderabad",
+    "category": "museum",
+    "rating": 4.6,
+    "latitude": 17.3713,
+    "longitude": 78.4804,
+    "description": "A treasure trove of art, history, and cultural artifacts representing the rich heritage of the city.",
+    "image": "https://images.unsplash.com/photo-1581888227599-779811939961?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Birla Mandir Hyderabad",
+    "city": "Hyderabad",
+    "category": "temple",
+    "rating": 4.6,
+    "latitude": 17.4062,
+    "longitude": 78.4691,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://images.unsplash.com/photo-1581888227599-779811939961?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Chowmahalla Palace",
+    "city": "Hyderabad",
+    "category": "history",
+    "rating": 4.5,
+    "latitude": 17.3579,
+    "longitude": 78.4716,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://images.unsplash.com/photo-1581888227599-779811939961?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Shilparamam",
+    "city": "Hyderabad",
+    "category": "culture",
+    "rating": 4.4,
+    "latitude": 17.4526,
+    "longitude": 78.3782,
+    "description": "A lively cultural hub where visitors can experience traditional lifestyles, local crafts, and delicious street food.",
+    "image": "https://images.unsplash.com/photo-1581888227599-779811939961?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Snow World",
+    "city": "Hyderabad",
+    "category": "adventure",
+    "rating": 4.3,
+    "latitude": 17.41,
+    "longitude": 78.48,
+    "description": "An exciting spot offering thrill-seeking outdoor activities, panoramic views, and memorable fun.",
+    "image": "https://images.unsplash.com/photo-1581888227599-779811939961?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Nehru Zoological Park",
+    "city": "Hyderabad",
+    "category": "nature",
+    "rating": 4.4,
+    "latitude": 17.3506,
+    "longitude": 78.451,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1581888227599-779811939961?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Victoria Memorial",
+    "city": "Kolkata",
+    "category": "history",
+    "rating": 4.7,
+    "latitude": 22.5448,
+    "longitude": 88.3426,
+    "description": "A majestic white marble palace built in memory of Queen Victoria, set within sprawling gardens.",
+    "image": "https://images.unsplash.com/photo-1558431382-27e303142255?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Howrah Bridge",
+    "city": "Kolkata",
+    "category": "history",
+    "rating": 4.6,
+    "latitude": 22.585,
+    "longitude": 88.3468,
+    "description": "A massive steel cantilever bridge across the Hooghly River, serving as the cultural symbol of Kolkata.",
+    "image": "https://images.unsplash.com/photo-1558431382-27e303142255?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Dakshineswar Temple",
+    "city": "Kolkata",
+    "category": "temple",
+    "rating": 4.7,
+    "latitude": 22.6556,
+    "longitude": 88.3572,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://images.unsplash.com/photo-1558431382-27e303142255?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Kalighat Temple",
+    "city": "Kolkata",
+    "category": "temple",
+    "rating": 4.6,
+    "latitude": 22.52,
+    "longitude": 88.3425,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://images.unsplash.com/photo-1558431382-27e303142255?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Indian Museum",
+    "city": "Kolkata",
+    "category": "museum",
+    "rating": 4.6,
+    "latitude": 22.558,
+    "longitude": 88.3515,
+    "description": "A treasure trove of art, history, and cultural artifacts representing the rich heritage of the city.",
+    "image": "https://images.unsplash.com/photo-1558431382-27e303142255?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Eco Park",
+    "city": "Kolkata",
+    "category": "nature",
+    "rating": 4.5,
+    "latitude": 22.5867,
+    "longitude": 88.4584,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1558431382-27e303142255?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Marble Palace",
+    "city": "Kolkata",
+    "category": "history",
+    "rating": 4.4,
+    "latitude": 22.5766,
+    "longitude": 88.359,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://images.unsplash.com/photo-1558431382-27e303142255?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Science City",
+    "city": "Kolkata",
+    "category": "museum",
+    "rating": 4.5,
+    "latitude": 22.54,
+    "longitude": 88.396,
+    "description": "A treasure trove of art, history, and cultural artifacts representing the rich heritage of the city.",
+    "image": "https://images.unsplash.com/photo-1558431382-27e303142255?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Park Street",
+    "city": "Kolkata",
+    "category": "culture",
+    "rating": 4.4,
+    "latitude": 22.5535,
+    "longitude": 88.352,
+    "description": "A lively cultural hub where visitors can experience traditional lifestyles, local crafts, and delicious street food.",
+    "image": "https://images.unsplash.com/photo-1558431382-27e303142255?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Belur Math",
+    "city": "Kolkata",
+    "category": "temple",
+    "rating": 4.8,
+    "latitude": 22.632,
+    "longitude": 88.3554,
+    "description": "A peaceful and sacred place of worship, exhibiting spectacular traditional architecture and spiritual vibes.",
+    "image": "https://images.unsplash.com/photo-1558431382-27e303142255?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Mysore Palace",
+    "city": "Mysore",
+    "category": "history",
+    "rating": 4.8,
+    "latitude": 12.3052,
+    "longitude": 76.6551,
+    "description": "An incredibly grand palace that serves as the official residence of the Wadiyar dynasty, illuminated spectacular on Sundays.",
+    "image": "https://images.unsplash.com/photo-1590001155093-a3c66ab0c3ff?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Chamundi Hills",
+    "city": "Mysore",
+    "category": "nature",
+    "rating": 4.7,
+    "latitude": 12.272,
+    "longitude": 76.6707,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1590001155093-a3c66ab0c3ff?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Brindavan Gardens",
+    "city": "Mysore",
+    "category": "nature",
+    "rating": 4.6,
+    "latitude": 12.4244,
+    "longitude": 76.5728,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1590001155093-a3c66ab0c3ff?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "St Philomena’s Church",
+    "city": "Mysore",
+    "category": "church",
+    "rating": 4.6,
+    "latitude": 12.3256,
+    "longitude": 76.6593,
+    "description": "A historic sanctuary displaying beautiful colonial architecture, stained glass, and tranquil interiors.",
+    "image": "https://images.unsplash.com/photo-1590001155093-a3c66ab0c3ff?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Mysore Zoo",
+    "city": "Mysore",
+    "category": "nature",
+    "rating": 4.6,
+    "latitude": 12.3022,
+    "longitude": 76.6646,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1590001155093-a3c66ab0c3ff?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Lalitha Mahal",
+    "city": "Mysore",
+    "category": "history",
+    "rating": 4.5,
+    "latitude": 12.2734,
+    "longitude": 76.6733,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://images.unsplash.com/photo-1590001155093-a3c66ab0c3ff?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Karanji Lake",
+    "city": "Mysore",
+    "category": "nature",
+    "rating": 4.4,
+    "latitude": 12.297,
+    "longitude": 76.6725,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1590001155093-a3c66ab0c3ff?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Railway Museum",
+    "city": "Mysore",
+    "category": "museum",
+    "rating": 4.4,
+    "latitude": 12.3222,
+    "longitude": 76.6446,
+    "description": "A treasure trove of art, history, and cultural artifacts representing the rich heritage of the city.",
+    "image": "https://images.unsplash.com/photo-1590001155093-a3c66ab0c3ff?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Jaganmohan Palace",
+    "city": "Mysore",
+    "category": "museum",
+    "rating": 4.5,
+    "latitude": 12.3055,
+    "longitude": 76.651,
+    "description": "A treasure trove of art, history, and cultural artifacts representing the rich heritage of the city.",
+    "image": "https://images.unsplash.com/photo-1590001155093-a3c66ab0c3ff?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Srirangapatna",
+    "city": "Mysore",
+    "category": "history",
+    "rating": 4.6,
+    "latitude": 12.421,
+    "longitude": 76.691,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://images.unsplash.com/photo-1590001155093-a3c66ab0c3ff?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Fort Kochi",
+    "city": "Kochi",
+    "category": "history",
+    "rating": 4.7,
+    "latitude": 9.9667,
+    "longitude": 76.2425,
+    "description": "A charming seaside district famous for colonial Dutch/Portuguese architecture and relaxed cafes.",
+    "image": "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Chinese Fishing Nets",
+    "city": "Kochi",
+    "category": "culture",
+    "rating": 4.6,
+    "latitude": 9.9669,
+    "longitude": 76.2423,
+    "description": "A lively cultural hub where visitors can experience traditional lifestyles, local crafts, and delicious street food.",
+    "image": "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Mattancherry Palace",
+    "city": "Kochi",
+    "category": "history",
+    "rating": 4.5,
+    "latitude": 9.957,
+    "longitude": 76.258,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Jew Town",
+    "city": "Kochi",
+    "category": "culture",
+    "rating": 4.4,
+    "latitude": 9.9574,
+    "longitude": 76.2585,
+    "description": "A lively cultural hub where visitors can experience traditional lifestyles, local crafts, and delicious street food.",
+    "image": "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Santa Cruz Basilica",
+    "city": "Kochi",
+    "category": "church",
+    "rating": 4.6,
+    "latitude": 9.9641,
+    "longitude": 76.241,
+    "description": "A historic sanctuary displaying beautiful colonial architecture, stained glass, and tranquil interiors.",
+    "image": "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Marine Drive Kochi",
+    "city": "Kochi",
+    "category": "nature",
+    "rating": 4.5,
+    "latitude": 9.9816,
+    "longitude": 76.2773,
+    "description": "A scenic 3.6 km promenade along the coast, popular for evening walks and viewing the glowing 'Queen's Necklace'.",
+    "image": "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Hill Palace",
+    "city": "Kochi",
+    "category": "history",
+    "rating": 4.5,
+    "latitude": 9.9312,
+    "longitude": 76.3265,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Cherai Beach",
+    "city": "Kochi",
+    "category": "nature",
+    "rating": 4.6,
+    "latitude": 10.1426,
+    "longitude": 76.1784,
+    "description": "A breathtaking scenic spot offering peaceful surroundings and beautiful photo opportunities close to nature.",
+    "image": "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Bolgatty Palace",
+    "city": "Kochi",
+    "category": "history",
+    "rating": 4.4,
+    "latitude": 9.9862,
+    "longitude": 76.2647,
+    "description": "A fascinating historical landmark offering a deep dive into the rich heritage and architecture of the region.",
+    "image": "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=800&auto=format&fit=crop"
+  },
+  {
+    "name": "Wonderla Kochi",
+    "city": "Kochi",
+    "category": "adventure",
+    "rating": 4.5,
+    "latitude": 10.0891,
+    "longitude": 76.36,
+    "description": "An exciting spot offering thrill-seeking outdoor activities, panoramic views, and memorable fun.",
+    "image": "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=800&auto=format&fit=crop"
+  }
+]
