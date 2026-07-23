@@ -1,6 +1,9 @@
 import requests
 import json
+import logging
 from utils.cache import get_cached_response, set_cached_response
+
+logger = logging.getLogger("aerotravel.weather")
 
 # WMO Weather Interpretation Codes (WW) -> Condition name & Emoji
 WMO_CODE_MAP = {
@@ -62,8 +65,11 @@ def get_open_meteo_forecast(lat, lon, days=7):
     }
 
     try:
+        logger.info(f"[Open-Meteo Weather API] Fetching forecast for lat={lat_r}, lon={lon_r}, days={days}")
         resp = requests.get(url, params=params, timeout=5)
+        logger.info(f"[Open-Meteo Weather API] Response status={resp.status_code} for lat={lat_r}, lon={lon_r}")
         if resp.status_code != 200:
+            logger.error(f"[Open-Meteo Weather API Error] Response status {resp.status_code} for lat={lat_r}, lon={lon_r}")
             expired_cached = get_cached_response(cache_key, ignore_ttl=True)
             return expired_cached
 

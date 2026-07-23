@@ -9,7 +9,36 @@ import json
 import os
 import sqlite3
 import requests
+import logging
+from logging.handlers import RotatingFileHandler
 from datetime import datetime, timedelta
+
+# Configure application-wide logger
+logger = logging.getLogger("aerotravel")
+logger.setLevel(logging.INFO)
+
+if not logger.handlers:
+    formatter = logging.Formatter("[%(asctime)s] %(levelname)s in %(module)s (%(lineno)d): %(message)s")
+    
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+    
+    fh = RotatingFileHandler("app.log", maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8")
+    fh.setLevel(logging.INFO)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
+def mask_email(email: str) -> str:
+    if not email or "@" not in email:
+        return "***"
+    user, domain = email.split("@", 1)
+    if len(user) <= 2:
+        masked_user = user[0] + "*"
+    else:
+        masked_user = user[0] + "*" * (len(user) - 2) + user[-1]
+    return f"{masked_user}@{domain}"
 from utils.distance import calculate_distance, get_real_route, estimate_travel_cost, optimize_route
 from utils.migrate import run_migrations
 from utils.cache import get_cached_response, set_cached_response
@@ -398,7 +427,9 @@ def get_unsplash_image(place_name, city=None):
                 "orientation": "landscape",
                 "client_id": access_key
             }
+            logger.info(f"[Unsplash API] Requesting image for place='{place_name}', city='{city}', query='{query}'")
             resp = requests.get(url, params=params, timeout=3.5)
+            logger.info(f"[Unsplash API] Response status={resp.status_code} for query='{query}'")
             if resp.status_code == 200:
                 data = resp.json()
                 results = data.get("results", [])
@@ -418,7 +449,7 @@ def get_unsplash_image(place_name, city=None):
                     set_cached_response(cache_key, payload, 2592000)  # 30 days TTL
                     return payload
         except Exception as e:
-            print(f"[Unsplash API Error] {e}")
+            logger.error(f"[Unsplash API Error] Request failed for place='{place_name}', city='{city}': {e}")
             expired_cached = get_cached_response(cache_key, ignore_ttl=True)
             if expired_cached:
                 return expired_cached
@@ -453,7 +484,9 @@ def get_wikipedia_image(place_name, city=None):
             "format": "json"
         }
         try:
+            logger.info(f"[Wikipedia API] Searching image for place='{place_name}', query='{q}'")
             response = requests.get(url, headers=headers, params=params, timeout=3.0)
+            logger.info(f"[Wikipedia API] Search response status={response.status_code} for query='{q}'")
             if response.status_code == 200:
                 search_results = response.json().get("query", {}).get("search", [])
                 for result in search_results:
@@ -479,7 +512,9 @@ def get_wikipedia_image(place_name, city=None):
                             "format": "json",
                             "redirects": 1
                         }
+                        logger.info(f"[Wikipedia API] Requesting thumbnail for title='{title}'")
                         img_response = requests.get(url, headers=headers, params=img_params, timeout=3.0)
+                        logger.info(f"[Wikipedia API] Thumbnail response status={img_response.status_code} for title='{title}'")
                         if img_response.status_code == 200:
                             pages = img_response.json().get("query", {}).get("pages", {})
                             for page_id, page_data in pages.items():
@@ -490,7 +525,7 @@ def get_wikipedia_image(place_name, city=None):
                                     set_cached_response(cache_key, {"image": source}, 604800)  # 7 days TTL
                                     return source
         except Exception as e:
-            print(f"Error querying Wikipedia for '{q}': {e}")
+            logger.error(f"[Wikipedia API Error] Search query '{q}' failed for place='{place_name}': {e}")
             expired_cached = get_cached_response(cache_key, ignore_ttl=True)
             if expired_cached:
                 return expired_cached.get("image")
@@ -539,6 +574,7 @@ def fetch_places_from_api(city, lat, lon):
 
     api_key = os.getenv("GEOAPIFY_KEY")
     if not api_key:
+        logger.warning(f"[Geoapify API Warning] GEOAPIFY_KEY not set. Cannot fetch places for '{city}'")
         return []
     
     categories = "tourism.sights,tourism.attraction,entertainment.culture,leisure.park"
@@ -551,8 +587,11 @@ def fetch_places_from_api(city, lat, lon):
     }
     
     try:
+        logger.info(f"[Geoapify API] Fetching places for city='{city}', lat={lat}, lon={lon}")
         response = requests.get(url, params=params, timeout=5)
+        logger.info(f"[Geoapify API] Response status={response.status_code} for city='{city}'")
         if response.status_code != 200:
+            logger.error(f"[Geoapify API Error] Request failed with status {response.status_code} for city='{city}'")
             expired_cached = get_cached_response(cache_key, ignore_ttl=True)
             return expired_cached if expired_cached else []
 
@@ -675,15 +714,18 @@ def api_search_flights():
     }
 
     try:
+        logger.info(f"[Duffel API] Searching flights: origin='{origin}', destination='{destination}', date='{date}', cabin='{cabin}', adults={adults}")
         resp = requests.post(
             "https://api.duffel.com/air/offer_requests?return_offers=true",
             headers=DUFFEL_HEADERS,
             json=payload,
             timeout=15
         )
+        logger.info(f"[Duffel API] Response status={resp.status_code} for {origin}->{destination}")
         data = resp.json()
 
         if "errors" in data:
+            logger.error(f"[Duffel API Error] Duffel API returned errors for {origin}->{destination}: {data['errors']}")
             expired_cached = get_cached_response(cache_key, ignore_ttl=True)
             if expired_cached:
                 return jsonify(expired_cached)
@@ -1278,15 +1320,18 @@ def get_hotels():
         return jsonify(cached)
 
     try:
+        logger.info(f"[Xotelo API] Fetching hotel list: location_key='{location_key}', city='{destination}', limit={limit}, sort='{sort}'")
         resp = requests.get(f"{XOTELO_BASE}/list", params={
             "location_key": location_key,
             "limit": limit,
             "sort": sort,
             "offset": 0
         }, timeout=4)
+        logger.info(f"[Xotelo API] List response status={resp.status_code} for location_key='{location_key}'")
         data = resp.json()
 
         if data.get("error"):
+            logger.error(f"[Xotelo API Error] List request returned error for location_key='{location_key}': {data['error']}")
             raise Exception(data["error"])
 
         hotels = data["result"]["list"]
@@ -1452,6 +1497,7 @@ def get_hotel_rates():
         return jsonify(res_payload)
 
     try:
+        logger.info(f"[Xotelo API] Fetching hotel rates: hotel_key='{hotel_key}', chk_in='{chk_in}', chk_out='{chk_out}'")
         resp = requests.get(f"{XOTELO_BASE}/rates", params={
             "hotel_key": hotel_key,
             "chk_in":    chk_in,
@@ -1460,9 +1506,11 @@ def get_hotel_rates():
             "rooms":     rooms,
             "adults":    adults
         }, timeout=4)
+        logger.info(f"[Xotelo API] Rates response status={resp.status_code} for hotel_key='{hotel_key}'")
         data = resp.json()
 
         if data.get("error"):
+            logger.error(f"[Xotelo API Error] Rates request returned error for hotel_key='{hotel_key}': {data['error']}")
             raise Exception(data["error"])
 
         rates = data["result"]["rates"]
@@ -1470,7 +1518,7 @@ def get_hotel_rates():
         # Format rates
         formatted_rates = []
         for r in rates:
-            name = r.get("name") or "Standard Room"
+            name = r.get("name") or "Standard Rate"
             rate_val = r.get("rate")
             formatted_rates.append({
                 "name": name,
@@ -1496,7 +1544,7 @@ def get_hotel_rates():
         return jsonify(res_payload)
 
     except Exception as e:
-        print(f"Xotelo rates error, checking fallback cache: {e}")
+        logger.error(f"[Xotelo API Error] Rates failed for hotel_key='{hotel_key}': {e}")
         expired_cached = get_cached_response(cache_key, ignore_ttl=True)
         if expired_cached:
             return jsonify(expired_cached)
@@ -1532,10 +1580,12 @@ def api_search_hotels():
         return jsonify(cached)
 
     try:
+        logger.info(f"[Xotelo API] Searching hotels: query='{query}'")
         resp = requests.get(f"{XOTELO_BASE}/search", params={
             "query": query,
             "location_type": "accommodation"
         }, timeout=4)
+        logger.info(f"[Xotelo API] Search response status={resp.status_code} for query='{query}'")
         data = resp.json()
 
         hotels = data.get("result", {}).get("list", [])
@@ -1544,7 +1594,7 @@ def api_search_hotels():
         return jsonify(res_payload)
 
     except Exception as e:
-        print(f"Xotelo search error, checking fallback cache: {e}")
+        logger.error(f"[Xotelo API Error] Search failed for query='{query}': {e}")
         expired_cached = get_cached_response(cache_key, ignore_ttl=True)
         if expired_cached:
             return jsonify(expired_cached)
@@ -1605,11 +1655,15 @@ def api_generate_trip():
     pace = data.get('pace', 'moderate')
     vibe = data.get('vibe', 'mixed')
 
+    logger.info(f"[Trip Generation] API Request received: city='{city}', days={days}, budget={budget}, pace='{pace}', vibe='{vibe}'")
+
     # Validate India-only
     lat, lon = get_city_coordinates(city)
     if lat == "INTERNATIONAL":
+        logger.warning(f"[Trip Generation Failure] International destination requested: '{city}'")
         return jsonify({'error': f"Only Indian destinations are supported. '{city}' is international."}), 400
     elif not lat or not lon:
+        logger.warning(f"[Trip Generation Failure] Could not resolve coordinates for city: '{city}'")
         return jsonify({'error': f"Could not find destination '{city}'. Try a different Indian city."}), 400
 
     pace_map = {"relaxed": 2, "moderate": 3, "packed": 4}
@@ -1620,6 +1674,7 @@ def api_generate_trip():
 
     required_places = places_per_day * days
     if len(city_places) < required_places and lat and lon:
+        logger.info(f"[Trip Generation] City '{city}' has {len(city_places)} places (required: {required_places}). Fetching Geoapify places...")
         fetched = fetch_places_from_api(city, lat, lon)
         if fetched:
             conn = sqlite3.connect("database.db")
@@ -1661,11 +1716,15 @@ def api_generate_trip():
     else:
         filtered_places = sorted(city_places, key=lambda x: x.get("rating", 0), reverse=True)
 
+    if not filtered_places:
+        logger.error(f"[Trip Generation Failure] Zero places available for city='{city}'")
+
     itinerary = []
     index = 0
     for day in range(1, days + 1):
         day_places = filtered_places[index:index + places_per_day]
         if not day_places:
+            logger.warning(f"[Trip Generation] Day {day} has no additional places available for city='{city}'")
             break
         if all(("latitude" in p and "longitude" in p) for p in day_places):
             day_places = optimize_route(day_places)
@@ -1698,8 +1757,11 @@ def api_generate_trip():
             saved_trip_id = cursor.lastrowid
             conn.commit()
             conn.close()
+            logger.info(f"[Trip Generation] Auto-saved trip ID {saved_trip_id} for user_id={g.user_id}")
         except Exception as err:
-            print("Failed to auto-save trip:", err)
+            logger.error(f"[Trip Generation Error] Failed to auto-save trip for user_id={g.user_id}: {err}")
+
+    logger.info(f"[Trip Generation Success] Generated {len(itinerary)}-day itinerary for city='{city}', total_cost=₹{total_trip_cost}")
 
     return jsonify({
         'success': True,
@@ -1731,6 +1793,8 @@ def generate():
     pace = request.form.get('pace', 'moderate')
     vibe = request.form.get('vibe', 'mixed')
 
+    logger.info(f"[Trip Generation] Form Request received: city='{city}', days={days}, budget={budget}, pace='{pace}', vibe='{vibe}'")
+
     # Map travel pace to places per day
     pace_map = {
         "relaxed": 2,
@@ -1747,9 +1811,11 @@ def generate():
     if len(city_places) < required_places:
         lat, lon = get_city_coordinates(city)
         if lat == "INTERNATIONAL":
+            logger.warning(f"[Trip Generation Failure] International destination requested via Form: '{city}'")
             flash(f"Only destinations in India are supported. Please choose an Indian city instead of '{city}'.", "warning")
             return redirect("/")
         elif not lat or not lon:
+            logger.warning(f"[Trip Generation Failure] Could not geocode city coordinates for '{city}'")
             flash(f"Could not find or geocode destination: '{city}'. Please check the spelling or try another Indian city.", "error")
             return redirect("/")
         

@@ -1,6 +1,9 @@
 import os
 import requests
+import logging
 from utils.cache import get_cached_response, set_cached_response
+
+logger = logging.getLogger("aerotravel.trains")
 
 # Standard Indian Railway Station Code Mapping
 STATION_CODE_MAP = {

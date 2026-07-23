@@ -1,6 +1,9 @@
 import os
 import requests
+import logging
 from utils.cache import get_cached_response, set_cached_response
+
+logger = logging.getLogger("aerotravel.aqi")
 
 def get_air_quality(lat, lon):
     """
@@ -12,6 +15,7 @@ def get_air_quality(lat, lon):
         lat_r = round(float(lat), 3)
         lon_r = round(float(lon), 3)
     except (ValueError, TypeError):
+        logger.warning(f"[AQI Warning] Invalid coordinates provided: lat={lat}, lon={lon}")
         return parse_aqi_level(50, source="Default")
 
     cache_key = f"aqi:{lat_r}:{lon_r}"
@@ -27,9 +31,11 @@ def get_air_quality(lat, lon):
     # Tier 1: IQAir AirVisual API (if key provided)
     if iqair_key:
         try:
+            logger.info(f"[IQAir API] Fetching AQI for lat={lat_r}, lon={lon_r}")
             url = "https://api.airvisual.com/v2/nearest_city"
             params = {"lat": lat, "lon": lon, "key": iqair_key}
             resp = requests.get(url, params=params, timeout=4)
+            logger.info(f"[IQAir API] Response status={resp.status_code}")
             if resp.status_code == 200:
                 d = resp.json()
                 if d.get("status") == "success":
@@ -37,13 +43,15 @@ def get_air_quality(lat, lon):
                     aqi_val = current.get("aqius", 50)
                     aqi_data = parse_aqi_level(aqi_val, pm25=current.get("mainus"), source="IQAir AirVisual")
         except Exception as e:
-            print(f"[AQI Error] IQAir API error: {e}")
+            logger.error(f"[AQI Error] IQAir API error for lat={lat_r}, lon={lon_r}: {e}")
 
     # Tier 2: Open-Meteo Air Quality API (Free, no key required)
     if not aqi_data:
         try:
+            logger.info(f"[Open-Meteo AQI API] Fetching AQI for lat={lat_r}, lon={lon_r}")
             url = f"https://air-quality-api.open-meteo.com/v1/air-quality?latitude={lat}&longitude={lon}&current=us_aqi,pm10,pm2_5"
             resp = requests.get(url, timeout=4)
+            logger.info(f"[Open-Meteo AQI API] Response status={resp.status_code}")
             if resp.status_code == 200:
                 d = resp.json()
                 current = d.get("current", {})
@@ -52,7 +60,7 @@ def get_air_quality(lat, lon):
                 pm10 = current.get("pm10")
                 aqi_data = parse_aqi_level(us_aqi, pm25=pm25, pm10=pm10, source="Open-Meteo Air Quality")
         except Exception as e:
-            print(f"[AQI Error] Open-Meteo Air Quality error: {e}")
+            logger.error(f"[AQI Error] Open-Meteo Air Quality error for lat={lat_r}, lon={lon_r}: {e}")
 
     # Fallback default if network fails
     if not aqi_data:

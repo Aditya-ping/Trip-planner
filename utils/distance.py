@@ -1,5 +1,8 @@
 import math
 import polyline
+import logging
+
+logger = logging.getLogger("aerotravel.distance")
 
 def calculate_distance(lat1, lon1, lat2, lon2):
     R = 6371  # Earth radius in km
@@ -291,7 +294,10 @@ def optimize_route(places, return_stats=False):
     Logs pre-2-opt vs post-2-opt distance improvements.
     """
     if not places:
+        logger.warning("[TSP Optimizer Warning] Empty places list provided to optimize_route")
         return ([] if not return_stats else ([], 0.0, 0.0, 0.0))
+
+    logger.info(f"[TSP Optimizer] Optimizing route for {len(places)} places")
 
     # 1. Nearest Neighbor pass
     nn_route = nearest_neighbor_route(places)
@@ -300,7 +306,7 @@ def optimize_route(places, return_stats=False):
     optimized_route, pre_dist, post_dist = two_opt(nn_route)
 
     improvement_pct = round(((pre_dist - post_dist) / pre_dist * 100), 2) if pre_dist > 0 else 0.0
-    print(f"[Route Optimization] Pre 2-Opt: {pre_dist:.2f} km -> Post 2-Opt: {post_dist:.2f} km (Improvement: {improvement_pct}%)")
+    logger.info(f"[TSP Optimizer] Pre 2-Opt: {pre_dist:.2f} km -> Post 2-Opt: {post_dist:.2f} km (Improvement: {improvement_pct}%)")
 
     if return_stats:
         return optimized_route, pre_dist, post_dist, improvement_pct
