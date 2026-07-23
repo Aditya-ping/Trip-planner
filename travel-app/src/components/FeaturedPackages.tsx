@@ -7,6 +7,7 @@ import {
   Sparkles, Eye, X, Info, MapPin, Compass, AlertCircle, ChevronLeft, ChevronRight, CreditCard
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import TicketDivider from "./TicketDivider";
 
 interface Package {
   id: number;
@@ -255,10 +256,10 @@ export default function FeaturedPackages() {
           return (
             <div
               key={pkg.id}
-              className="rounded-3xl overflow-hidden glassmorphism border border-border-color shadow-premium flex flex-col justify-between group"
+              className="rounded-md overflow-hidden bg-[#161B2C] border border-[#C9A15A]/30 shadow-document flex flex-col justify-between group"
             >
               {/* Header Image with Photo Slider */}
-              <div className="relative h-56 w-full overflow-hidden">
+              <div className="relative h-56 w-full overflow-hidden border-b border-[#C9A15A]/20">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={`${pkg.id}-${currentImageIdx}`}
@@ -270,7 +271,7 @@ export default function FeaturedPackages() {
                     style={{ backgroundImage: `url(${currentImgUrl})` }}
                   />
                 </AnimatePresence>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F1A]/80 to-transparent pointer-events-none" />
 
                 {/* Left/Right Slider Controls */}
                 {pkg.images && pkg.images.length > 1 && (
@@ -294,7 +295,7 @@ export default function FeaturedPackages() {
                         <span
                           key={idx}
                           className={`block w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                            idx === currentImageIdx ? "bg-white scale-125" : "bg-white/40"
+                            idx === currentImageIdx ? "bg-[#C9A15A] scale-125" : "bg-white/40"
                           }`}
                         />
                       ))}
@@ -303,39 +304,37 @@ export default function FeaturedPackages() {
                 )}
               </div>
 
-              {/* Package Details */}
+              {/* Package Details (Upper Ticket Section) */}
               <div className="p-6 flex-grow flex flex-col justify-between">
                 <div>
-                  <span className="text-[10px] font-bold text-accent-sunset uppercase tracking-widest block mb-2">
-                    {pkg.destination}
+                  <span className="text-[10px] font-mono font-bold text-[#C9A15A] uppercase tracking-widest block mb-2">
+                    [ {pkg.destination} ]
                   </span>
-                  <h3 className="font-heading font-extrabold text-xl text-fg-main tracking-tight leading-snug mb-4">
+                  <h3 className="font-heading font-extrabold text-xl text-[#EDEAE2] tracking-tight leading-snug mb-3">
                     {pkg.title}
                   </h3>
 
-                  <div className="flex gap-4 mb-4 text-xs text-text-muted">
+                  <div className="flex gap-4 mb-4 text-xs text-[#8A94A6] font-sans">
                     <span className="flex items-center gap-1">
-                      <Clock className="w-4 h-4 text-accent-primary" />
+                      <Clock className="w-4 h-4 text-[#C9A15A]" />
                       {pkg.duration}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4 text-accent-sunset" />
+                      <Calendar className="w-4 h-4 text-[#C9A15A]" />
                       Daily Departures
                     </span>
                   </div>
 
                   {/* Short snippet description */}
-                  <p className="text-xs text-text-muted mb-4 line-clamp-2">
+                  <p className="text-xs text-[#8A94A6] mb-4 line-clamp-2 font-sans">
                     {pkg.description}
                   </p>
-
-                  <hr className="border-border-color/60 mb-4" />
 
                   {/* Highlight Amenities */}
                   <ul className="space-y-2">
                     {pkg.amenities.slice(0, 3).map((amenity) => (
-                      <li key={amenity} className="flex items-center gap-2 text-xs text-text-muted">
-                        <Check className="w-4 h-4 text-accent-emerald shrink-0" />
+                      <li key={amenity} className="flex items-center gap-2 text-xs text-[#8A94A6] font-sans">
+                        <Check className="w-4 h-4 text-[#C9A15A] shrink-0" />
                         {amenity}
                       </li>
                     ))}
@@ -349,36 +348,34 @@ export default function FeaturedPackages() {
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.3 }}
-                        className="overflow-hidden mt-4 pt-4 border-t border-dashed border-border-color"
+                        className="overflow-hidden mt-4 pt-4 border-t border-dashed border-[#C9A15A]/30"
                       >
                         {/* Day summaries */}
-                        <h4 className="font-heading font-extrabold text-xs text-fg-main uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5 text-accent-sunset" />
+                        <h4 className="font-heading font-extrabold text-xs text-[#EDEAE2] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-[#C9A15A]" />
                           Trip Highlights
                         </h4>
                         <ul className="space-y-2 mb-4">
                           {pkg.daySummary.map((day) => (
-                            <li key={day} className="text-[11px] text-text-muted leading-relaxed">
+                            <li key={day} className="text-[11px] text-[#8A94A6] leading-relaxed font-sans">
                               {day}
                             </li>
                           ))}
                         </ul>
 
                         {/* Additional amenity */}
-                        <div className="flex items-center gap-2 text-xs text-text-muted">
-                          <ShieldCheck className="w-4 h-4 text-accent-primary" />
+                        <div className="flex items-center gap-2 text-xs text-[#8A94A6] font-sans">
+                          <ShieldCheck className="w-4 h-4 text-[#C9A15A]" />
                           All flights and transfers managed
                         </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
-                </div>
 
-                <div className="mt-6">
                   {/* Expand button */}
                   <button
                     onClick={() => toggleExpand(pkg.id)}
-                    className="flex items-center gap-1 text-[11px] font-bold text-accent-primary uppercase tracking-widest mb-4 hover:text-accent-sunset cursor-pointer transition-colors"
+                    className="flex items-center gap-1 text-[11px] font-bold font-mono text-[#C9A15A] uppercase tracking-widest mt-4 hover:text-[#E6C887] cursor-pointer transition-colors"
                   >
                     {isExpanded ? (
                       <>
@@ -390,33 +387,37 @@ export default function FeaturedPackages() {
                       </>
                     )}
                   </button>
+                </div>
 
-                  <div className="flex justify-between items-center border-t border-border-color pt-4 gap-2">
-                    <div>
-                      <span className="text-[10px] text-text-muted block">Package Total</span>
-                      <span className="text-xl font-extrabold text-accent-sunset">{pkg.price}</span>
-                      <span className="text-[10px] text-text-muted"> / pax</span>
-                    </div>
+                {/* Ticket Stub Divider between Summary and Price Section */}
+                <TicketDivider className="my-4 opacity-75" />
 
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => {
-                          setSelectedPkg(pkg);
-                          setModalImageIndex(0);
-                        }}
-                        className="px-3 py-2.5 rounded-xl border border-border-color text-text-muted hover:text-fg-main hover:bg-fg-main/5 text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
-                        title="View Details"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleBookNow(pkg.id)}
-                        className="px-4 py-2.5 rounded-xl bg-accent-primary text-white text-xs font-bold shadow-md hover:bg-accent-sunset hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer flex items-center gap-1.5"
-                      >
-                        <CreditCard className="w-4 h-4" />
-                        Book Now
-                      </button>
-                    </div>
+                {/* Ticket Bottom Stub Section (Price & Action) */}
+                <div className="flex justify-between items-center gap-2">
+                  <div>
+                    <span className="text-[10px] font-mono text-[#8A94A6] uppercase tracking-wider block">Package Total</span>
+                    <span className="text-xl font-extrabold text-[#C9A15A] font-sans">{pkg.price}</span>
+                    <span className="text-[10px] text-[#8A94A6]"> / pax</span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => {
+                        setSelectedPkg(pkg);
+                        setModalImageIndex(0);
+                      }}
+                      className="px-3 py-2.5 rounded-md border border-[#C9A15A]/30 text-[#8A94A6] hover:text-[#EDEAE2] hover:bg-[#C9A15A]/10 text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                      title="View Details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={() => handleBookNow(pkg.id)}
+                      className="px-4 py-2.5 rounded-md bg-[#C9A15A] text-[#0B0F1A] text-xs font-bold shadow-md hover:bg-[#E6C887] transition-all duration-200 cursor-pointer flex items-center gap-1.5"
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      Book Now
+                    </button>
                   </div>
                 </div>
 

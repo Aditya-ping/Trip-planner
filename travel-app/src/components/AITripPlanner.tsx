@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   Sparkles, Loader2, ArrowRight, RotateCcw, Calendar,
   CheckSquare, CloudSun, MapPin, AlertCircle, Wifi, CreditCard, ExternalLink,
@@ -10,10 +10,13 @@ import {
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import dynamic from "next/dynamic";
+import TicketDivider from "./TicketDivider";
+
+import { API_BASE_URL } from "@/utils/config";
 
 const ItineraryMap = dynamic(() => import("./ItineraryMap"), { ssr: false });
 
-const FLASK_API = "http://127.0.0.1:5000";
+const FLASK_API = API_BASE_URL;
 
 const cityEmojis: Record<string, string> = {
   "Agra": "🕌", "Amritsar": "🙏", "Bangalore": "🌆", "Delhi": "🏛️",
@@ -61,16 +64,39 @@ type GeneratedTrip = {
     temp: string;
     condition: string;
     description: string;
+    elevation_m?: number;
     packing: string[];
+    daily_forecast?: {
+      day: number;
+      date: string;
+      temp_max: number;
+      temp_min: number;
+      condition: string;
+      icon: string;
+      precip_probability: number;
+    }[];
+  };
+  aqi?: {
+    aqi: number;
+    status: string;
+    color: string;
+    badge_emoji: string;
+    advice: string;
+    pm25?: number;
+    pm10?: number;
+    source?: string;
   };
   itinerary: {
     day: number;
     places: {
+      id?: number;
       name: string;
       category: string;
       rating: number;
       description: string;
       image: string;
+      image_attribution?: string;
+      image_attribution_link?: string;
       latitude?: number;
       longitude?: number;
     }[];
@@ -123,6 +149,7 @@ const allPackages: PackageSnippet[] = [
 
 export default function AITripPlanner() {
   const router = useRouter();
+  const prefersReducedMotion = useReducedMotion();
   const [cities, setCities] = useState<string[]>([]);
   const [city, setCity] = useState("");
   const [budget, setBudget] = useState(25000);
@@ -141,6 +168,45 @@ export default function AITripPlanner() {
   const [newPlaceName, setNewPlaceName] = useState("");
   const [newPlaceDesc, setNewPlaceDesc] = useState("");
   const [newPlaceCategory, setNewPlaceCategory] = useState("Sightseeing");
+
+  // Regional language translation state
+  const [translatedMap, setTranslatedMap] = useState<Record<string, string>>({});
+  const [activeLangMap, setActiveLangMap] = useState<Record<string, string>>({});
+  const [loadingLangMap, setLoadingLangMap] = useState<Record<string, boolean>>({});
+
+  const handleTranslatePlaceDesc = async (placeId: number | undefined, placeName: string, lang: string) => {
+    const key = placeId ? `id_${placeId}` : `name_${placeName}`;
+    
+    if (lang === 'en') {
+      setActiveLangMap((prev) => ({ ...prev, [key]: 'en' }));
+      return;
+    }
+
+    const cacheKey = `${key}_${lang}`;
+    if (translatedMap[cacheKey]) {
+      setActiveLangMap((prev) => ({ ...prev, [key]: lang }));
+      return;
+    }
+
+    setLoadingLangMap((prev) => ({ ...prev, [key]: true }));
+
+    try {
+      const endpoint = placeId 
+        ? `${FLASK_API}/api/places/${placeId}/translate?lang=${lang}`
+        : `${FLASK_API}/api/places/1/translate?lang=${lang}`;
+
+      const res = await fetch(endpoint);
+      const data = await res.json();
+      if (data.success && data.translated_description) {
+        setTranslatedMap((prev) => ({ ...prev, [cacheKey]: data.translated_description }));
+        setActiveLangMap((prev) => ({ ...prev, [key]: lang }));
+      }
+    } catch (err) {
+      console.error("Failed to fetch translation:", err);
+    } finally {
+      setLoadingLangMap((prev) => ({ ...prev, [key]: false }));
+    }
+  };
 
   const handleRemovePlace = (dayIndex: number, placeIndex: number) => {
     if (!result) return;
@@ -310,17 +376,17 @@ export default function AITripPlanner() {
               {apiOnline ? `Live DB — ${cities.length} cities loaded` : "Offline — showing cached cities"}
             </div>
 
-            <form onSubmit={handleGenerate} className="p-10 rounded-3xl glassmorphism border border-border-color shadow-2xl flex flex-col gap-6 backdrop-blur-xl bg-card-bg/40">
+            <form onSubmit={handleGenerate} className="p-8 rounded-md bg-[#161B2C] border border-[#C9A15A]/30 shadow-document flex flex-col gap-6">
 
               {/* City Dropdown — from DB */}
               <div>
-                <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2.5">
-                  🇮🇳 Select Destination City
+                <label className="font-sans text-[11px] font-semibold text-[#8A94A6] uppercase tracking-wider block mb-2">
+                  Select Destination City
                 </label>
                 <select
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="w-full px-4 py-4 rounded-xl border border-border-color bg-bg-main text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-accent-primary cursor-pointer text-fg-main"
+                  className="w-full px-4 py-3 rounded-md border border-[#C9A15A]/30 bg-[#0B0F1A] text-sm font-semibold focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A] cursor-pointer text-[#EDEAE2]"
                 >
                   {cities.map((c) => (
                     <option key={c} value={c}>
@@ -332,17 +398,17 @@ export default function AITripPlanner() {
 
               {/* Budget slider */}
               <div>
-                <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2.5">
-                  Trip Budget: <span className="text-accent-primary font-black text-sm">₹{budget.toLocaleString("en-IN")}</span>
+                <label className="font-sans text-[11px] font-semibold text-[#8A94A6] uppercase tracking-wider block mb-2">
+                  Trip Budget: <span className="text-[#C9A15A] font-bold text-sm font-mono">₹{budget.toLocaleString("en-IN")}</span>
                 </label>
                 <input
                   type="range"
                   min={5000} max={200000} step={1000}
                   value={budget}
                   onChange={(e) => setBudget(Number(e.target.value))}
-                  className="w-full accent-accent-primary cursor-pointer h-2 bg-fg-main/10 rounded-lg appearance-none"
+                  className="w-full accent-[#C9A15A] cursor-pointer h-2 bg-[#0B0F1A] rounded-md appearance-none border border-[#C9A15A]/20"
                 />
-                <div className="flex justify-between text-[10px] text-text-muted mt-2 font-medium">
+                <div className="flex justify-between text-[10px] text-[#8A94A6] mt-2 font-mono">
                   <span>₹5,000</span><span>₹1,00,000</span><span>₹2,00,000</span>
                 </div>
               </div>
@@ -350,11 +416,11 @@ export default function AITripPlanner() {
               {/* Pace + Days */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2.5">Travel Pace</label>
+                  <label className="font-sans text-[11px] font-semibold text-[#8A94A6] uppercase tracking-wider block mb-2">Travel Pace</label>
                   <select
                     value={pace}
                     onChange={(e) => setPace(e.target.value)}
-                    className="w-full px-4 py-4 rounded-xl border border-border-color bg-bg-main text-sm font-semibold focus:outline-none text-fg-main"
+                    className="w-full px-4 py-3 rounded-md border border-[#C9A15A]/30 bg-[#0B0F1A] text-sm font-semibold focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A] text-[#EDEAE2]"
                   >
                     <option value="relaxed">🧘 Relaxed (2/day)</option>
                     <option value="moderate">🚶 Moderate (3/day)</option>
@@ -362,11 +428,11 @@ export default function AITripPlanner() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2.5">Duration</label>
+                  <label className="font-sans text-[11px] font-semibold text-[#8A94A6] uppercase tracking-wider block mb-2">Duration</label>
                   <select
                     value={daysCount}
                     onChange={(e) => setDaysCount(Number(e.target.value))}
-                    className="w-full px-4 py-4 rounded-xl border border-border-color bg-bg-main text-sm font-semibold focus:outline-none text-fg-main"
+                    className="w-full px-4 py-3 rounded-md border border-[#C9A15A]/30 bg-[#0B0F1A] text-sm font-semibold focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A] text-[#EDEAE2]"
                   >
                     {[2,3,4,5,6,7].map(d => (
                       <option key={d} value={d}>{d} Day{d > 1 ? "s" : ""}</option>
@@ -377,7 +443,7 @@ export default function AITripPlanner() {
 
               {/* Vibe */}
               <div>
-                <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2.5">Trip Vibe</label>
+                <label className="font-sans text-[11px] font-semibold text-[#8A94A6] uppercase tracking-wider block mb-2">Trip Vibe</label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { id: "mixed",     label: "🎯 Mixed" },
@@ -389,10 +455,10 @@ export default function AITripPlanner() {
                       key={item.id}
                       type="button"
                       onClick={() => setVibe(item.id)}
-                      className={`px-3 py-3 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                      className={`px-3 py-2.5 rounded-md text-xs font-semibold border transition-all cursor-pointer ${
                         vibe === item.id
-                          ? "bg-accent-primary border-accent-primary text-white shadow-md shadow-accent-primary/20"
-                          : "border-border-color hover:bg-card-bg text-fg-main"
+                          ? "bg-[#C9A15A] border-[#C9A15A] text-[#0B0F1A] font-bold shadow-md"
+                          : "border-[#C9A15A]/30 hover:bg-[#C9A15A]/10 text-[#EDEAE2]"
                       }`}
                     >
                       {item.label}
@@ -405,9 +471,9 @@ export default function AITripPlanner() {
               <button
                 type="submit"
                 disabled={loading || !city}
-                className="flex items-center justify-center gap-2 w-full py-4.5 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary hover:opacity-95 text-white font-black text-sm shadow-xl shadow-accent-primary/25 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 w-full py-4 rounded-md bg-[#C9A15A] hover:bg-[#E6C887] text-[#0B0F1A] font-bold text-sm shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Sparkles className="w-4 h-4 text-yellow-300 animate-pulse" />
+                <Sparkles className="w-4 h-4" />
                 Generate {city ? `${city} Itinerary` : "Itinerary"}
               </button>
             </form>
@@ -423,15 +489,15 @@ export default function AITripPlanner() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0 }}
-                  className="w-full h-full rounded-3xl border border-dashed border-border-color/80 flex flex-col justify-center items-center p-12 text-center text-text-muted bg-card-bg/10 backdrop-blur-md"
+                  className="w-full h-full rounded-md border border-dashed border-[#C9A15A]/30 flex flex-col justify-center items-center p-12 text-center text-text-muted bg-[#161B2C]"
                 >
-                  <div className="w-20 h-20 rounded-2xl bg-accent-primary/10 text-accent-primary flex items-center justify-center mb-6 shadow-inner">
-                    <Sparkles className="w-10 h-10" />
+                  <div className="w-16 h-16 rounded-md bg-[#C9A15A]/10 text-[#C9A15A] border border-[#C9A15A]/30 flex items-center justify-center mb-6">
+                    <Sparkles className="w-8 h-8" />
                   </div>
                   <h3 className="font-heading font-extrabold text-2xl text-fg-main mb-2">
                     Your India Itinerary Awaits
                   </h3>
-                  <p className="text-sm max-w-sm mb-8 leading-relaxed">
+                  <p className="text-sm max-w-sm mb-8 leading-relaxed font-sans text-[#8A94A6]">
                     Choose from <strong>{cities.length} Indian cities</strong> in our live database. Set your vibe, budget, and duration — then hit generate!
                   </p>
                   <div className="flex flex-wrap justify-center gap-2.5 max-w-lg">
@@ -439,12 +505,12 @@ export default function AITripPlanner() {
                       <button
                         key={c}
                         onClick={() => setCity(c)}
-                        className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all cursor-pointer ${city === c ? "bg-accent-primary text-white border-accent-primary shadow-md" : "border-border-color text-text-muted hover:border-accent-primary bg-card-bg/30"}`}
+                        className={`px-3.5 py-1.5 rounded-md text-xs font-semibold border transition-all cursor-pointer ${city === c ? "bg-[#C9A15A] text-[#0B0F1A] border-[#C9A15A] font-bold shadow-md" : "border-[#C9A15A]/20 text-[#8A94A6] hover:border-[#C9A15A] bg-[#0B0F1A]"}`}
                       >
                         {cityEmojis[c]} {c}
                       </button>
                     ))}
-                    {cities.length > 10 && <span className="text-xs text-text-muted self-center font-bold">+{cities.length - 10} more</span>}
+                    {cities.length > 10 && <span className="text-xs text-[#8A94A6] self-center font-bold">+{cities.length - 10} more</span>}
                   </div>
                 </motion.div>
               )}
@@ -456,9 +522,9 @@ export default function AITripPlanner() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="w-full h-full rounded-3xl glassmorphism border border-border-color flex flex-col justify-center items-center p-8 text-center gap-4 bg-card-bg/25"
+                  className="w-full h-full rounded-md bg-[#161B2C] border border-[#C9A15A]/30 flex flex-col justify-center items-center p-8 text-center gap-4"
                 >
-                  <Loader2 className="w-12 h-12 text-accent-secondary animate-spin" />
+                  <Loader2 className="w-12 h-12 text-[#C9A15A] animate-spin" />
                   <h3 className="font-heading font-black text-xl text-fg-main">
                     Building Your {city} Guide
                   </h3>
@@ -466,13 +532,13 @@ export default function AITripPlanner() {
                     key={loadingStep}
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-sm text-text-muted max-w-xs"
+                    className="text-sm text-[#8A94A6] max-w-xs font-sans"
                   >
                     {loadingStep}
                   </motion.p>
                   <div className="flex gap-1.5 mt-2">
                     {loadingSteps.map((_, i) => (
-                      <div key={i} className={`h-1 rounded-full transition-all duration-500 ${i <= loadingSteps.indexOf(loadingStep) ? "w-10 bg-accent-primary" : "w-5 bg-border-color"}`} />
+                      <div key={i} className={`h-1 rounded-full transition-all duration-500 ${i <= loadingSteps.indexOf(loadingStep) ? "w-10 bg-[#C9A15A]" : "w-5 bg-[#C9A15A]/20"}`} />
                     ))}
                   </div>
                 </motion.div>
@@ -485,14 +551,14 @@ export default function AITripPlanner() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className="w-full h-full rounded-3xl border border-red-200 bg-red-50 flex flex-col justify-center items-center p-12 text-center gap-4"
+                  className="w-full h-full rounded-md border border-red-500/30 bg-[#161B2C] flex flex-col justify-center items-center p-12 text-center gap-4"
                 >
                   <AlertCircle className="w-14 h-14 text-red-400" />
-                  <h3 className="font-heading font-bold text-xl text-red-700">Couldn&apos;t Generate Plan</h3>
-                  <p className="text-sm text-red-500 max-w-sm">{error}</p>
+                  <h3 className="font-heading font-bold text-xl text-red-400">Couldn&apos;t Generate Plan</h3>
+                  <p className="text-sm text-red-300 max-w-sm">{error}</p>
                   <button
                     onClick={() => setError(null)}
-                    className="mt-2 px-6 py-3 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold transition-all cursor-pointer"
+                    className="mt-2 px-6 py-3 rounded-md bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-bold transition-all cursor-pointer"
                   >
                     Try Again
                   </button>
@@ -506,23 +572,23 @@ export default function AITripPlanner() {
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className="w-full h-full rounded-3xl glassmorphism border border-border-color flex flex-col overflow-hidden shadow-premium text-fg-main text-left"
+                  className="w-full h-full rounded-md bg-[#161B2C] border border-[#C9A15A]/30 flex flex-col overflow-hidden shadow-document text-[#EDEAE2] text-left"
                 >
                   {/* Header */}
-                  <div className="p-6 bg-gradient-to-r from-accent-primary/10 to-accent-secondary/10 border-b border-border-color flex justify-between items-center shrink-0">
+                  <div className="p-6 bg-[#0B0F1A] border-b border-[#C9A15A]/20 flex justify-between items-center shrink-0">
                     <div>
-                      <h3 className="font-heading font-black text-xl text-fg-main flex items-center gap-2">
-                        <MapPin className="w-5 h-5 text-accent-secondary" />
+                      <h3 className="font-heading font-black text-xl text-[#EDEAE2] flex items-center gap-2">
+                        <MapPin className="w-5 h-5 text-[#C9A15A]" />
                         {cityEmojis[result.city] || "📍"} {result.city}
                       </h3>
-                      <span className="text-[11px] text-text-muted uppercase tracking-wider block font-semibold mt-1">
-                        {result.days} Days · {result.pace} pace · {result.vibe} vibe · 🇮🇳 India
+                      <span className="text-[11px] font-mono text-[#8A94A6] uppercase tracking-wider block font-semibold mt-1">
+                        [ {result.days} DAYS · {result.pace} pace · {result.vibe} vibe ]
                       </span>
                     </div>
                     <div>
                       <button
                         onClick={() => setResult(null)}
-                        className="p-2.5 rounded-xl bg-card-bg hover:bg-fg-main/5 transition-all cursor-pointer border border-border-color flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-fg-main"
+                        className="p-2.5 rounded-md bg-[#161B2C] hover:bg-[#C9A15A]/10 transition-all cursor-pointer border border-[#C9A15A]/30 flex items-center gap-1.5 text-xs font-semibold text-[#8A94A6] hover:text-[#C9A15A]"
                       >
                         <RotateCcw className="w-4 h-4" />
                         Reset Itinerary
@@ -534,61 +600,153 @@ export default function AITripPlanner() {
                   <div className="p-6 flex-grow overflow-y-auto flex flex-col md:flex-row gap-6">
                     {/* Left Column: Itinerary Details */}
                     <div className="flex-1 space-y-6">
-                      {/* Weather */}
-                      <div className="p-4 rounded-2xl bg-accent-secondary/5 border border-accent-secondary/10 flex gap-3">
-                        <CloudSun className="w-7 h-7 text-accent-secondary shrink-0 mt-0.5" />
-                        <div>
-                          <div className="font-bold text-sm text-accent-secondary">{result.weather.temp} — {result.weather.condition}</div>
-                          <p className="text-[11px] text-text-muted mt-0.5">{result.weather.description}</p>
+                      {/* Weather & AQI Summary Row */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* Weather */}
+                        <div className="p-4 rounded-md bg-[#0B0F1A] border border-[#C9A15A]/20 flex items-start gap-3">
+                          <CloudSun className="w-7 h-7 text-[#C9A15A] shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between flex-wrap gap-1.5">
+                              <div className="font-bold text-xs text-[#C9A15A]">{result.weather.temp} — {result.weather.condition}</div>
+                              {result.weather.elevation_m && result.weather.elevation_m > 1500 ? (
+                                <span className="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                  🏔️ High Altitude ({result.weather.elevation_m}m)
+                                </span>
+                              ) : null}
+                            </div>
+                            <p className="text-[11px] text-[#8A94A6] mt-0.5 line-clamp-2">{result.weather.description}</p>
+                          </div>
                         </div>
+
+                        {/* Real-time Air Quality Index (AQI) Badge */}
+                        {result.aqi && (
+                          <div className={`p-4 rounded-md border flex items-start gap-3 ${
+                            result.aqi.color === "emerald" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" :
+                            result.aqi.color === "yellow" ? "bg-amber-500/10 border-amber-500/30 text-amber-400" :
+                            result.aqi.color === "orange" ? "bg-orange-500/10 border-orange-500/30 text-orange-400" :
+                            result.aqi.color === "red" ? "bg-red-500/10 border-red-500/30 text-red-400" :
+                            "bg-purple-500/10 border-purple-500/30 text-purple-400"
+                          }`}>
+                            <div className="text-2xl shrink-0 leading-none">{result.aqi.badge_emoji}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="font-mono font-black text-xs tracking-wide uppercase">AQI {result.aqi.aqi} • {result.aqi.status}</span>
+                                <span className="text-[9px] opacity-75 font-mono px-1.5 py-0.5 rounded bg-black/20">LIVE AQI</span>
+                              </div>
+                              <p className="text-[11px] opacity-90 mt-0.5 leading-snug">{result.aqi.advice}</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Day-by-Day */}
                       <div className="space-y-6">
-                        {result.itinerary.map((day) => (
-                          <div key={day.day} className="border-l-2 border-accent-primary pl-4 ml-2 relative">
-                            <div className="w-4 h-4 rounded-full bg-bg-main border-2 border-accent-primary absolute -left-[9px] top-0 flex items-center justify-center">
-                              <div className="w-1.5 h-1.5 rounded-full bg-accent-primary" />
-                            </div>
-                            <div className="font-heading font-extrabold text-xs text-accent-primary mb-3 uppercase tracking-wider flex items-center gap-1.5">
-                              <Calendar className="w-3.5 h-3.5" />
-                              Day {day.day}
-                            </div>
-                            <div className="space-y-3">
-                              {day.places.map((place, idx) => (
-                                <div key={idx} className="p-4 rounded-xl bg-card-bg/60 border border-border-color flex gap-3.5 items-start relative group/place">
-                                  <img
-                                    src={place.image}
-                                    alt={place.name}
-                                    className="w-14 h-14 rounded-lg object-cover shrink-0"
-                                    onError={(e) => { (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${place.name}/80/80`; }}
-                                  />
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-start">
-                                      <h4 className="font-heading font-bold text-xs text-fg-main truncate">{place.name}</h4>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleRemovePlace(day.day - 1, idx)}
-                                        className="p-1 rounded-lg text-text-muted hover:text-accent-sunset hover:bg-fg-main/5 transition-all cursor-pointer shrink-0 ml-1"
-                                        title="Remove Place"
-                                      >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      </button>
+                        {result.itinerary.map((day, dIdx) => {
+                          const dayFc = result.weather.daily_forecast?.find(df => df.day === day.day) || result.weather.daily_forecast?.[day.day - 1];
+                          return (
+                            <motion.div
+                              key={day.day}
+                              initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 18 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{
+                                duration: 0.38,
+                                delay: dIdx * 0.12,
+                                ease: [0.22, 0.03, 0.26, 1]
+                              }}
+                            >
+                              {dIdx > 0 && <TicketDivider className="opacity-60 my-4" />}
+                              <div className="border-l-2 border-[#C9A15A] pl-4 ml-2 relative">
+                              <div className="w-3.5 h-3.5 rounded-sm bg-[#0B0F1A] border border-[#C9A15A] absolute -left-[8px] top-0 flex items-center justify-center">
+                                <div className="w-1.5 h-1.5 bg-[#C9A15A]" />
+                              </div>
+                              <div className="font-mono font-bold text-xs text-[#C9A15A] mb-3 uppercase tracking-wider flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded border border-[#C9A15A]/40 bg-[#C9A15A]/10 font-mono tracking-widest text-[11px]">
+                                  <Calendar className="w-3.5 h-3.5" />
+                                  [ TKT-SEQ 0{day.day} • DAY 0{day.day} ]
+                                </div>
+                                {dayFc && (
+                                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#0B0F1A] text-[#8A94A6] text-[11px] font-semibold border border-[#C9A15A]/20 font-sans tracking-normal capitalize">
+                                    <span>{dayFc.icon}</span>
+                                    <span>{dayFc.temp_min}°C / {dayFc.temp_max}°C</span>
+                                    <span className="text-[#8A94A6] hidden sm:inline">• {dayFc.condition}</span>
+                                    {dayFc.precip_probability >= 20 && (
+                                      <span className="text-blue-400 font-semibold">• ☔ {dayFc.precip_probability}% rain</span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="space-y-3">
+                              {day.places.map((place, idx) => {
+                                const placeKey = place.id ? `id_${place.id}` : `name_${place.name}`;
+                                const activeLang = activeLangMap[placeKey] || 'en';
+                                const displayedDesc = (activeLang !== 'en' && translatedMap[`${placeKey}_${activeLang}`]) 
+                                  ? translatedMap[`${placeKey}_${activeLang}`] 
+                                  : place.description;
+
+                                return (
+                                  <div key={idx} className="p-4 rounded-md bg-[#0B0F1A] border border-[#C9A15A]/20 flex gap-3.5 items-start relative group/place">
+                                    <div className="flex flex-col items-center shrink-0">
+                                      <img
+                                        src={place.image}
+                                        alt={place.name}
+                                        className="w-14 h-14 rounded-md object-cover border border-[#C9A15A]/30"
+                                        onError={(e) => { (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${place.name}/80/80`; }}
+                                      />
                                     </div>
-                                    <p className="text-[10px] text-text-muted mt-0.5 line-clamp-2 leading-relaxed">{place.description}</p>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <span className="text-[9px] bg-accent-primary/10 text-accent-primary px-2 py-0.5 rounded-full font-semibold">{place.category}</span>
-                                      <span className="text-[9px] text-accent-sunset font-semibold">⭐ {place.rating}</span>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex justify-between items-start">
+                                        <h4 className="font-heading font-bold text-xs text-[#EDEAE2] truncate">{place.name}</h4>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemovePlace(day.day - 1, idx)}
+                                          className="p-1 rounded text-[#8A94A6] hover:text-red-400 transition-all cursor-pointer shrink-0 ml-1"
+                                          title="Remove Place"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                      <p className="text-[10px] text-[#8A94A6] mt-0.5 leading-relaxed font-sans">{displayedDesc}</p>
+
+                                      <div className="flex items-center justify-between flex-wrap gap-2 mt-2 pt-1 border-t border-[#C9A15A]/20">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-[9px] bg-[#C9A15A]/10 text-[#C9A15A] border border-[#C9A15A]/30 px-2 py-0.5 rounded font-mono uppercase">{place.category}</span>
+                                          <span className="text-[9px] text-[#C9A15A] font-semibold">⭐ {place.rating}</span>
+                                        </div>
+
+                                        {/* Regional Language Translation Pills */}
+                                        <div className="flex items-center gap-1">
+                                          {[
+                                            { code: 'en', label: '🇬🇧 EN' },
+                                            { code: 'hi', label: '🇮🇳 हिंदी' },
+                                            { code: 'kn', label: '🇮🇳 ಕನ್ನಡ' },
+                                            { code: 'ta', label: '🇮🇳 தமிழ்' }
+                                          ].map((l) => (
+                                            <button
+                                              key={l.code}
+                                              type="button"
+                                              onClick={() => handleTranslatePlaceDesc(place.id, place.name, l.code)}
+                                              disabled={loadingLangMap[placeKey]}
+                                              className={`text-[8px] px-1.5 py-0.5 rounded transition-all cursor-pointer ${
+                                                activeLang === l.code
+                                                  ? "bg-[#C9A15A] text-[#0B0F1A] font-bold"
+                                                  : "bg-[#161B2C] text-[#8A94A6] hover:text-[#EDEAE2]"
+                                              }`}
+                                            >
+                                              {loadingLangMap[placeKey] && activeLang === l.code ? "..." : l.label}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              ))}
+                                );
+                              })}
 
                               {/* Add Spot Custom Form */}
                               {addingPlaceForDay === day.day ? (
-                                <div className="p-4 rounded-xl border border-border-color bg-card-bg/95 flex flex-col gap-3">
-                                  <h5 className="text-[10px] font-bold text-accent-primary uppercase tracking-wider">
-                                    Add Custom Spot to Day {day.day}
+                                <div className="p-4 rounded-md border border-[#C9A15A]/30 bg-[#0B0F1A] flex flex-col gap-3">
+                                  <h5 className="text-[10px] font-mono font-bold text-[#C9A15A] uppercase tracking-wider">
+                                    [ ADD SPOT — DAY 0{day.day} ]
                                   </h5>
                                   
                                   <div className="space-y-2">
@@ -597,21 +755,21 @@ export default function AITripPlanner() {
                                       placeholder="Spot Name (e.g. Royal Cafe)"
                                       value={newPlaceName}
                                       onChange={(e) => setNewPlaceName(e.target.value)}
-                                      className="w-full px-3 py-2 rounded-lg border border-border-color bg-bg-main text-xs text-fg-main focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/30"
+                                      className="w-full px-3 py-2 rounded-md border border-[#C9A15A]/30 bg-[#161B2C] text-xs text-[#EDEAE2] focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A]"
                                     />
                                     <input
                                       type="text"
                                       placeholder="Category (e.g. Sightseeing, Dining)"
                                       value={newPlaceCategory}
                                       onChange={(e) => setNewPlaceCategory(e.target.value)}
-                                      className="w-full px-3 py-2 rounded-lg border border-border-color bg-bg-main text-xs text-fg-main focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/30"
+                                      className="w-full px-3 py-2 rounded-md border border-[#C9A15A]/30 bg-[#161B2C] text-xs text-[#EDEAE2] focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A]"
                                     />
                                     <textarea
                                       placeholder="Description (What to do there?)"
                                       value={newPlaceDesc}
                                       rows={2}
                                       onChange={(e) => setNewPlaceDesc(e.target.value)}
-                                      className="w-full px-3 py-2 rounded-lg border border-border-color bg-bg-main text-xs text-fg-main focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/30 resize-none"
+                                      className="w-full px-3 py-2 rounded-md border border-[#C9A15A]/30 bg-[#161B2C] text-xs text-[#EDEAE2] focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A] resize-none"
                                     />
                                   </div>
 
@@ -619,7 +777,7 @@ export default function AITripPlanner() {
                                     <button
                                       type="button"
                                       onClick={() => setAddingPlaceForDay(null)}
-                                      className="px-3 py-1.5 rounded-lg border border-border-color text-[10px] font-bold text-text-muted hover:text-fg-main hover:bg-fg-main/5 cursor-pointer transition-all"
+                                      className="px-3 py-1.5 rounded-md border border-[#C9A15A]/30 text-[10px] font-bold text-[#8A94A6] hover:text-[#EDEAE2] cursor-pointer transition-all"
                                     >
                                       Cancel
                                     </button>
@@ -627,7 +785,7 @@ export default function AITripPlanner() {
                                       type="button"
                                       onClick={() => handleAddPlace(day.day - 1)}
                                       disabled={!newPlaceName.trim()}
-                                      className="px-3 py-1.5 rounded-lg bg-accent-primary text-white text-[10px] font-bold shadow-md hover:bg-accent-sunset transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                      className="px-3 py-1.5 rounded-md bg-[#C9A15A] text-[#0B0F1A] text-[10px] font-bold hover:bg-[#E6C887] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                     >
                                       Add Spot
                                     </button>
@@ -642,39 +800,41 @@ export default function AITripPlanner() {
                                     setNewPlaceDesc("");
                                     setNewPlaceCategory("Sightseeing");
                                   }}
-                                  className="w-full py-2 rounded-xl border border-dashed border-border-color/60 hover:border-accent-primary hover:text-accent-primary transition-all text-[11px] font-bold flex items-center justify-center gap-1.5 cursor-pointer text-text-muted bg-fg-main/[0.02] hover:bg-accent-primary/5"
+                                  className="w-full py-2 rounded-md border border-dashed border-[#C9A15A]/40 hover:border-[#C9A15A] hover:text-[#C9A15A] transition-all text-[11px] font-bold flex items-center justify-center gap-1.5 cursor-pointer text-[#8A94A6] bg-[#0B0F1A]"
                                 >
                                   <Plus className="w-3.5 h-3.5" />
                                   Add Custom Spot to Day {day.day}
                                 </button>
                               )}
                               {day.routes.length > 0 && (
-                                <div className="text-[10px] text-text-muted space-y-1 pl-1">
+                                <div className="text-[10px] text-[#8A94A6] space-y-1 pl-1 font-mono">
                                   {day.routes.map((r, i) => (
                                     <div key={i} className="flex items-center gap-1">
                                       <span>🚕</span>
                                       <span>{r.from} → {r.to}</span>
                                       {r.distance && <span className="opacity-60">· {r.distance}</span>}
-                                      {r.cost > 0 && <span className="text-accent-emerald font-semibold ml-auto">₹{r.cost}</span>}
+                                      {r.cost > 0 && <span className="text-[#C9A15A] font-semibold ml-auto">₹{r.cost}</span>}
                                     </div>
                                   ))}
                                 </div>
                               )}
                             </div>
-                          </div>
-                        ))}
+                            </div>
+                            </motion.div>
+                         );
+                      })}
                       </div>
 
                       {/* Packing List */}
                       <div className="pt-1">
-                        <h4 className="font-heading font-extrabold text-xs mb-2.5 flex items-center gap-1.5 uppercase tracking-wider">
-                          <CheckSquare className="w-3.5 h-3.5 text-accent-sunset" />
+                        <h4 className="font-heading font-extrabold text-xs mb-2.5 flex items-center gap-1.5 uppercase tracking-wider text-[#EDEAE2]">
+                          <CheckSquare className="w-3.5 h-3.5 text-[#C9A15A]" />
                           Packing Checklist
                         </h4>
                         <div className="grid grid-cols-2 gap-2">
                           {result.weather.packing.map((item) => (
-                            <label key={item} className="flex items-center gap-2 p-2 rounded-lg border border-border-color bg-card-bg/25 text-[11px] text-text-muted cursor-pointer hover:bg-card-bg">
-                              <input type="checkbox" className="w-3 h-3 accent-accent-primary" defaultChecked />
+                            <label key={item} className="flex items-center gap-2 p-2 rounded-md border border-[#C9A15A]/20 bg-[#0B0F1A] text-[11px] text-[#8A94A6] cursor-pointer hover:bg-[#161B2C]">
+                              <input type="checkbox" className="w-3 h-3 accent-[#C9A15A]" defaultChecked />
                               {item}
                             </label>
                           ))}

@@ -48,72 +48,172 @@ def estimate_travel_time(distance, mode):
     return round(time_minutes)
 import requests
 import os
+from utils.cache import get_cached_response, set_cached_response
 
 def get_real_route(lat1, lon1, lat2, lon2):
-    api_key = os.getenv("ORS_API_KEY")
+    """
+    Fetches real driving road distance and travel duration between two coordinate points.
+    Supports Google Directions API, Mapbox Directions API, Geoapify Routing API, and OSRM.
+    Caches results per stop-pair in SQLite api_cache for 30 days.
+    Falls back to 1.3x Haversine approximation on API failure/timeout.
+    """
+    l1_r = round(float(lat1), 4)
+    l2_r = round(float(lon1), 4)
+    l3_r = round(float(lat2), 4)
+    l4_r = round(float(lon2), 4)
+    cache_key = f"directions:{l1_r},{l2_r}:{l3_r},{l4_r}"
 
-    if not api_key:
-        distance = calculate_distance(lat1, lon1, lat2, lon2)
-        mode = suggest_transport(distance)
-        duration = estimate_travel_time(distance, mode)
-        return {
-            "distance": distance,
+    cached = get_cached_response(cache_key)
+    if cached is not None:
+        return cached
+
+    google_key = os.getenv("GOOGLE_MAPS_KEY")
+    mapbox_key = os.getenv("MAPBOX_KEY")
+    geoapify_key = os.getenv("GEOAPIFY_KEY")
+    ors_key = os.getenv("ORS_API_KEY")
+
+    route_data = None
+
+    # Priority 1: Google Directions API
+    if google_key and not route_data:
+        try:
+            url = "https://maps.googleapis.com/maps/api/directions/json"
+            params = {
+                "origin": f"{lat1},{lon1}",
+                "destination": f"{lat2},{lon2}",
+                "mode": "driving",
+                "key": google_key
+            }
+            resp = requests.get(url, params=params, timeout=4)
+            if resp.status_code == 200:
+                d = resp.json()
+                if d.get("routes"):
+                    r = d["routes"][0]["legs"][0]
+                    route_data = {
+                        "distance": round(r["distance"]["value"] / 1000.0, 2),
+                        "duration": round(r["duration"]["value"] / 60.0),
+                        "mode": "Car/Cab",
+                        "is_real_road": True,
+                        "source": "google"
+                    }
+        except Exception as e:
+            print(f"[Directions API] Google Directions error: {e}")
+
+    # Priority 2: Mapbox Directions API
+    if mapbox_key and not route_data:
+        try:
+            url = f"https://api.mapbox.com/directions/v5/mapbox/driving/{lon1},{lat1};{lon2},{lat2}"
+            params = {"access_token": mapbox_key, "overview": "false"}
+            resp = requests.get(url, params=params, timeout=4)
+            if resp.status_code == 200:
+                d = resp.json()
+                if d.get("routes"):
+                    r = d["routes"][0]
+                    route_data = {
+                        "distance": round(r["distance"] / 1000.0, 2),
+                        "duration": round(r["duration"] / 60.0),
+                        "mode": "Car/Cab",
+                        "is_real_road": True,
+                        "source": "mapbox"
+                    }
+        except Exception as e:
+            print(f"[Directions API] Mapbox Directions error: {e}")
+
+    # Priority 3: Geoapify Routing API
+    if geoapify_key and not route_data:
+        try:
+            url = "https://api.geoapify.com/v1/routing"
+            params = {
+                "waypoints": f"{lat1},{lon1}|{lat2},{lon2}",
+                "mode": "drive",
+                "apiKey": geoapify_key
+            }
+            resp = requests.get(url, params=params, timeout=4)
+            if resp.status_code == 200:
+                d = resp.json()
+                if d.get("features"):
+                    props = d["features"][0]["properties"]
+                    route_data = {
+                        "distance": round(props["distance"] / 1000.0, 2),
+                        "duration": round(props["time"] / 60.0),
+                        "mode": "Car/Cab",
+                        "is_real_road": True,
+                        "source": "geoapify"
+                    }
+        except Exception as e:
+            print(f"[Directions API] Geoapify Routing error: {e}")
+
+    # Priority 4: OpenRouteService API
+    if ors_key and not route_data:
+        try:
+            url = "https://api.openrouteservice.org/v2/directions/driving-car"
+            headers = {"Authorization": ors_key, "Content-Type": "application/json"}
+            body = {"coordinates": [[lon1, lat1], [lon2, lat2]]}
+            resp = requests.post(url, json=body, headers=headers, timeout=4)
+            if resp.status_code == 200:
+                d = resp.json()
+                r = d["routes"][0]
+                route_data = {
+                    "distance": round(r["summary"]["distance"] / 1000.0, 2),
+                    "duration": round(r["summary"]["duration"] / 60.0),
+                    "mode": "Car/Cab",
+                    "is_real_road": True,
+                    "source": "ors"
+                }
+        except Exception as e:
+            print(f"[Directions API] ORS error: {e}")
+
+    # Priority 5: OSRM Public Routing API
+    if not route_data:
+        try:
+            url = f"http://router.project-osrm.org/route/v1/driving/{lon1},{lat1};{lon2},{lat2}"
+            params = {"overview": "false"}
+            resp = requests.get(url, params=params, timeout=4)
+            if resp.status_code == 200:
+                d = resp.json()
+                if d.get("routes"):
+                    r = d["routes"][0]
+                    route_data = {
+                        "distance": round(r["distance"] / 1000.0, 2),
+                        "duration": round(r["duration"] / 60.0),
+                        "mode": "Car/Cab",
+                        "is_real_road": True,
+                        "source": "osrm"
+                    }
+        except Exception as e:
+            print(f"[Directions API] OSRM error: {e}")
+
+    # Priority 6: Fallback to 1.3x Haversine approximation
+    if not route_data:
+        haversine_dist = calculate_distance(lat1, lon1, lat2, lon2)
+        road_approx_dist = round(haversine_dist * 1.3, 2)
+        mode = suggest_transport(road_approx_dist)
+        duration = estimate_travel_time(road_approx_dist, mode)
+        route_data = {
+            "distance": road_approx_dist,
             "duration": duration,
             "mode": mode,
-            "coordinates": [[lat1, lon1], [lat2, lon2]]
+            "is_real_road": False,
+            "source": "haversine_1.3x_fallback"
         }
 
-    url = "https://api.openrouteservice.org/v2/directions/driving-car"
-
-    headers = {
-        "Authorization": api_key,
-        "Content-Type": "application/json"
-    }
-
-    body = {
-        "coordinates": [
-            [lon1, lat1],
-            [lon2, lat2]
-        ]
-    }
-
-    try:
-        response = requests.post(url, json=body, headers=headers, timeout=5)
-        if response.status_code != 200:
-            raise Exception("API error")
-        data = response.json()
-        route = data["routes"][0]
-        distance_km = route["summary"]["distance"] / 1000
-        duration_min = route["summary"]["duration"] / 60
-        geometry = route["geometry"]
-        decoded = [list(coord) for coord in polyline.decode(geometry)]
-        return {
-            "distance": round(distance_km, 2),
-            "duration": round(duration_min),
-            "mode": "Car/Cab",
-            "coordinates": decoded
-        }
-    except Exception as e:
-        print(f"ORS Error or Timeout: {e}. Falling back to simulation.")
-        distance = calculate_distance(lat1, lon1, lat2, lon2)
-        mode = suggest_transport(distance)
-        duration = estimate_travel_time(distance, mode)
-        return {
-            "distance": distance,
-            "duration": duration,
-            "mode": mode,
-            "coordinates": [[lat1, lon1], [lat2, lon2]]
-        }
+    # Cache result for 30 days (2,592,000 seconds)
+    set_cached_response(cache_key, route_data, 2592000)
+    return route_data
     
-def estimate_travel_cost(distance_km):
+def estimate_travel_cost(distance_km, is_road_distance=True):
     """
-    Simple realistic cost model
+    Calculates cab fare based on road distance.
+    Uses formula: 250 base fare + (road_distance_km * 18), with a minimum fare of 150.
+    If is_road_distance is False, converts straight-line Haversine distance via 1.3x multiplier first.
     """
+    if not is_road_distance:
+        road_km = distance_km * 1.3
+    else:
+        road_km = distance_km
 
-    # You can tune these
-    fuel_cost_per_km = 10  # ₹ per km average mixed transport
-
-    return round(distance_km * fuel_cost_per_km)
+    fare = 250 + (road_km * 18)
+    return max(150, round(fare))
 
 def calculate_route_distance(places):
     """

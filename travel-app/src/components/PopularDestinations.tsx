@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, ArrowRight, X, Calendar, Users, ShieldCheck, CheckCircle, HelpCircle, ArrowLeft, Loader2, ExternalLink, PlaneTakeoff, ChevronLeft, ChevronRight } from "lucide-react";
+import { API_BASE_URL } from "@/utils/config";
 
 interface ItineraryDay {
   day: number;
@@ -538,7 +539,7 @@ export default function PopularDestinations() {
     const citySearch = getCitySearchName(selectedDest.name);
     setHotelsLoading(true);
 
-    fetch(`http://127.0.0.1:5000/api/hotels?city=${encodeURIComponent(citySearch)}`)
+    fetch(`${API_BASE_URL}/api/hotels?city=${encodeURIComponent(citySearch)}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.hotels && data.hotels.length > 0) {
@@ -581,7 +582,7 @@ export default function PopularDestinations() {
     }
 
     setRatesLoading(true);
-    fetch(`http://127.0.0.1:5000/api/hotel-rates?hotel_key=${encodeURIComponent(selectedHotel.key)}&chk_in=${checkIn}&chk_out=${checkOut}`)
+    fetch(`${API_BASE_URL}/api/hotel-rates?hotel_key=${encodeURIComponent(selectedHotel.key)}&chk_in=${checkIn}&chk_out=${checkOut}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.rates && data.rates.length > 0) {
@@ -628,7 +629,7 @@ export default function PopularDestinations() {
     const generatedId = "AT-" + Math.floor(100000 + Math.random() * 900000);
 
     try {
-      const res = await fetch("http://127.0.0.1:5000/api/bookings", {
+      const res = await fetch(`${API_BASE_URL}/api/bookings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -716,20 +717,16 @@ export default function PopularDestinations() {
       {/* Grid of Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {destinations.map((dest, idx) => (
-          <motion.div
+          <div
             key={dest.name}
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6, delay: idx * 0.1 }}
             onClick={() => {
               setSelectedDest(dest);
               setModalView("info");
               setModalImageIndex(0);
             }}
-            className="group relative h-[420px] rounded-3xl overflow-hidden shadow-premium hover:shadow-2xl transition-all duration-300 cursor-pointer"
+            className="group relative h-[420px] rounded-md overflow-hidden border border-[#C9A15A]/25 bg-[#0B0F1A] shadow-document hover:border-[#C9A15A]/50 transition-colors duration-300 cursor-pointer"
           >
-            {/* Background Image Container with Parallax Zoom and Crossfade Slideshow */}
+            {/* Background Image Container — Photo as primary visual interest */}
             <div className="absolute inset-0 z-0 overflow-hidden">
               <AnimatePresence mode="popLayout">
                 <motion.div
@@ -738,75 +735,75 @@ export default function PopularDestinations() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.8 }}
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-110"
+                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
                   style={{ backgroundImage: `url(${dest.images[(activeImgIndex + idx) % dest.images.length]})` }}
                 />
               </AnimatePresence>
-              {/* Gradient Overlay for Text readability */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10 group-hover:via-black/45 transition-colors duration-300 z-10" />
+              {/* Quiet, clean dark gradient at bottom for text contrast only */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F1A] via-[#0B0F1A]/20 to-transparent pointer-events-none z-10" />
             </div>
 
-            {/* Badge */}
+            {/* Minimal Category Tag */}
             <div className="absolute top-5 left-5 z-20">
-              <span className="px-3.5 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/10 text-[10px] font-bold text-white uppercase tracking-wider">
+              <span className="px-2.5 py-1 rounded bg-[#0B0F1A]/80 border border-[#C9A15A]/30 text-[10px] font-mono text-[#C9A15A] uppercase tracking-wider">
                 {dest.category}
               </span>
             </div>
 
             {/* Dot indicators at top-right */}
-            <div className="absolute top-5 right-5 z-20 flex gap-1 bg-black/30 backdrop-blur-sm px-2 py-1.5 rounded-full border border-white/10">
+            <div className="absolute top-5 right-5 z-20 flex gap-1 bg-[#0B0F1A]/70 px-2 py-1 rounded border border-[#C9A15A]/20">
               {dest.images.map((_, dotIdx) => {
                 const isActive = dotIdx === (activeImgIndex + idx) % dest.images.length;
                 return (
                   <span
                     key={dotIdx}
                     className={`block w-1 h-1 rounded-full transition-all duration-300 ${
-                      isActive ? "bg-white scale-125" : "bg-white/40"
+                      isActive ? "bg-[#C9A15A] scale-125" : "bg-white/40"
                     }`}
                   />
                 );
               })}
             </div>
 
-            {/* Card Content Footer */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 z-20 flex flex-col justify-end text-white">
+            {/* Card Content Footer — quiet typography */}
+            <div className="absolute bottom-0 left-0 right-0 p-6 z-20 flex flex-col justify-end text-[#EDEAE2]">
               <div className="flex justify-between items-end mb-2">
                 <div>
-                  <div className="flex items-center gap-1 text-[11px] text-accent-primary uppercase font-bold tracking-wider mb-1">
+                  <div className="flex items-center gap-1 text-[11px] font-mono text-[#C9A15A] uppercase font-bold tracking-wider mb-1">
                     <MapPin className="w-3 h-3" />
                     {dest.country}
                   </div>
-                  <h3 className="font-heading font-extrabold text-2xl tracking-tight leading-none mb-1">
+                  <h3 className="font-heading font-extrabold text-2xl tracking-tight leading-none mb-1 text-[#EDEAE2]">
                     {dest.name}
                   </h3>
-                  <p className="text-xs text-gray-300 font-light line-clamp-1">
+                  <p className="text-xs text-[#8A94A6] font-sans font-normal line-clamp-1">
                     {dest.tagline}
                   </p>
                 </div>
 
                 <div className="text-right">
-                  <span className="text-[10px] text-gray-400 block">Avg. Price</span>
-                  <span className="text-lg font-bold text-accent-primary">{dest.price}</span>
-                  <span className="text-[10px] text-gray-400"> / night</span>
+                  <span className="text-[10px] text-[#8A94A6] font-mono block">Avg. Stay</span>
+                  <span className="text-lg font-bold text-[#C9A15A] font-sans">{dest.price}</span>
+                  <span className="text-[10px] text-[#8A94A6]"> / night</span>
                 </div>
               </div>
 
-              {/* Expandable/Interactive Bottom Bar */}
-              <div className="h-[1px] bg-white/10 my-3" />
+              {/* Subtle Bottom Bar */}
+              <div className="h-[1px] bg-[#C9A15A]/20 my-3" />
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-1.5">
-                  <span className="px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 text-[10px] font-bold text-white uppercase tracking-wider">
+                  <span className="px-2 py-0.5 rounded bg-[#161B2C] border border-[#C9A15A]/30 text-[10px] font-mono font-bold text-[#C9A15A] uppercase tracking-wider">
                     {dest.duration}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-1 text-xs font-semibold text-accent-primary opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                <div className="flex items-center gap-1 text-xs font-semibold text-[#C9A15A] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
                   Book Stay
                   <ArrowRight className="w-4 h-4" />
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
 
@@ -991,7 +988,7 @@ export default function PopularDestinations() {
                     {/* Book Option Button */}
                     <button
                       onClick={() => setModalView("details")}
-                      className="w-full py-3.5 rounded-xl bg-accent-primary text-white text-xs font-bold hover:bg-accent-sunset hover:scale-[1.02] active:scale-95 transition-all cursor-pointer text-center shadow-lg shadow-accent-primary/20 flex items-center justify-center gap-2"
+                      className="w-full py-3.5 rounded-xl bg-accent-primary text-white text-xs font-bold hover:bg-accent-sunset transition-colors cursor-pointer text-center shadow-lg shadow-accent-primary/20 flex items-center justify-center gap-2"
                     >
                       Book Escape Stay
                       <ArrowRight className="w-4 h-4" />
@@ -1189,7 +1186,7 @@ export default function PopularDestinations() {
                     <button
                       type="submit"
                       disabled={!selectedHotel || !selectedRoom}
-                      className="w-full py-3.5 rounded-xl bg-accent-primary text-white text-xs font-bold hover:bg-accent-sunset hover:scale-[1.02] active:scale-95 transition-all cursor-pointer text-center shadow-lg shadow-accent-primary/20 disabled:opacity-55 disabled:cursor-not-allowed"
+                      className="w-full py-3.5 rounded-xl bg-accent-primary text-white text-xs font-bold hover:bg-accent-sunset transition-colors cursor-pointer text-center shadow-lg shadow-accent-primary/20 disabled:opacity-55 disabled:cursor-not-allowed"
                     >
                       Proceed to Review Stay
                     </button>
@@ -1256,7 +1253,7 @@ export default function PopularDestinations() {
                     <button
                       onClick={handleConfirmBooking}
                       disabled={bookingLoading}
-                      className="w-full py-4 rounded-xl bg-accent-primary text-white text-xs font-bold hover:bg-accent-sunset hover:scale-[1.02] active:scale-95 transition-all cursor-pointer text-center shadow-lg disabled:opacity-55 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="w-full py-4 rounded-xl bg-accent-primary text-white text-xs font-bold hover:bg-accent-sunset transition-colors cursor-pointer text-center shadow-lg disabled:opacity-55 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {bookingLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                       {bookingLoading ? "Processing Booking..." : "Confirm and Request Booking"}
@@ -1312,7 +1309,7 @@ export default function PopularDestinations() {
                           const img = selectedDest.image;
                           window.location.href = `/checkout?packageId=custom&city=${encodeURIComponent(city)}&priceNum=${total}&days=${days} Days / ${nights} Nights&image=${encodeURIComponent(img)}&includeFlights=true`;
                         }}
-                        className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary hover:opacity-95 text-white text-[11px] font-extrabold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                        className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary hover:opacity-95 text-white text-[11px] font-extrabold shadow-md transition-colors cursor-pointer"
                       >
                         <PlaneTakeoff className="w-3.5 h-3.5" />
                         Book Flights & Add to Package

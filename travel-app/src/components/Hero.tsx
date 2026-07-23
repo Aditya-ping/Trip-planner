@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 
 const slides = [
@@ -41,6 +41,7 @@ const slides = [
 
 export default function Hero() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const prefersReduced = useReducedMotion();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -50,62 +51,83 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="relative h-screen w-full flex items-center justify-center overflow-hidden bg-black">
+    <section className="relative h-screen w-full flex items-center justify-center overflow-hidden bg-[#0B0F1A]">
       {/* Background Slideshow */}
       <div className="absolute inset-0 z-0">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSlide}
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 0.65, scale: 1 }}
+            initial={{ opacity: 0, scale: prefersReduced ? 1 : 1.05 }}
+            animate={{ opacity: 0.5, scale: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 1.5, ease: "easeInOut" }}
+            transition={{ duration: prefersReduced ? 0 : 1.5, ease: "easeInOut" }}
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${slides[currentSlide].url})` }}
           />
         </AnimatePresence>
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-bg-main" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0B0F1A]/70 via-[#0B0F1A]/30 to-[#0B0F1A]" />
       </div>
 
       {/* Hero Content */}
       <div className="relative z-10 max-w-5xl mx-auto px-6 text-center flex flex-col items-center">
-        {/* Subtle Badge */}
+        {/* Subtle Brass Stamp Badge */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: prefersReduced ? 0 : 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="flex items-center gap-1.5 px-4 py-1.5 rounded-full glassmorphism text-xs font-semibold text-accent-primary uppercase tracking-widest mb-6"
+          transition={{ duration: prefersReduced ? 0 : 0.6 }}
+          className="flex items-center gap-2 px-4 py-1.5 rounded-sm border border-[#C9A15A]/30 bg-[#161B2C]/90 text-xs font-mono text-[#C9A15A] uppercase tracking-widest mb-6"
         >
-          <Sparkles className="w-3.5 h-3.5 animate-spin-slow text-yellow-400" />
-          Instant India Itinerary Planner
+          <Sparkles className="w-3.5 h-3.5 text-[#C9A15A]" />
+          Instant India Itinerary Engine
         </motion.div>
 
-        {/* Headline */}
+        {/* Headline with Fraunces Display Font */}
         <motion.h1
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: prefersReduced ? 0 : 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1 }}
-          className="font-heading font-black text-5xl md:text-7xl leading-tight md:leading-none text-white tracking-tight mb-6"
+          transition={{ duration: prefersReduced ? 0 : 0.8, delay: prefersReduced ? 0 : 0.1 }}
+          className="font-display font-black text-6xl md:text-8xl leading-none text-[#EDEAE2] tracking-tight mb-6"
         >
           Discover Extraordinary <br />
-          <span className="text-gradient">Places</span>
+          <span className="text-[#C9A15A] italic">Places</span>
         </motion.h1>
 
-        {/* Subheading */}
+        {/* Subheading in Inter Body Font */}
         <motion.p
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: prefersReduced ? 0 : 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-lg md:text-xl text-gray-200 max-w-2xl font-light leading-relaxed mb-10"
+          transition={{ duration: prefersReduced ? 0 : 0.8, delay: prefersReduced ? 0 : 0.2 }}
+          className="font-sans text-base md:text-lg text-[#8A94A6] max-w-2xl font-normal leading-relaxed mb-10"
         >
-          Explore the world's most beautiful destinations with personalized travel experiences.
+          Explore bespoke Indian destinations with personalized AI travel itineraries and passport-style package bookings.
         </motion.p>
+
+        {/* Action Buttons: single brass-gold CTA button, neutral secondary */}
+        <motion.div
+          initial={{ opacity: 0, y: prefersReduced ? 0 : 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: prefersReduced ? 0 : 0.8, delay: prefersReduced ? 0 : 0.3 }}
+          className="flex flex-col sm:flex-row items-center gap-4"
+        >
+          <a
+            href="#ai-planner"
+            className="font-sans px-8 py-3.5 rounded-md bg-[#C9A15A] hover:bg-[#E6C887] text-[#0B0F1A] font-semibold text-sm transition-all shadow-md cursor-pointer"
+          >
+            Start AI Planning
+          </a>
+          <a
+            href="#destinations"
+            className="font-sans px-8 py-3.5 rounded-md border border-[#C9A15A]/30 bg-[#161B2C]/80 hover:bg-[#161B2C] text-[#EDEAE2] font-semibold text-sm transition-all cursor-pointer"
+          >
+            Explore Destinations
+          </a>
+        </motion.div>
       </div>
 
       {/* Floating Location indicator */}
-      <div className="absolute bottom-8 right-8 z-10 hidden md:block text-right">
-        <span className="text-[10px] text-white/40 uppercase tracking-widest block">Current Highlight</span>
-        <span className="text-sm font-medium text-white/80">{slides[currentSlide].location}</span>
+      <div className="absolute bottom-8 right-8 z-10 hidden md:block text-right border-l-2 border-[#C9A15A]/50 pl-3">
+        <span className="text-[10px] font-mono text-[#8A94A6] uppercase tracking-widest block">Current Highlight</span>
+        <span className="text-xs font-semibold text-[#EDEAE2] font-sans">{slides[currentSlide].location}</span>
       </div>
     </section>
   );

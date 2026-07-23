@@ -1,7 +1,8 @@
 // travel-app/src/hooks/useHotels.js
 import { useState } from 'react'
+import { API_BASE_URL } from '../utils/config'
 
-const API = 'http://localhost:5000'
+const API = API_BASE_URL
 
 export function useHotels() {
   const [hotels, setHotels]   = useState([])

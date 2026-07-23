@@ -1,21 +1,24 @@
 import type { Metadata } from "next";
-import { Inter, Outfit } from "next/font/google";
+import { Inter, Fraunces } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const outfit = Outfit({
-  variable: "--font-outfit",
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
+  display: "swap",
+  axes: ["SOFT", "WONK", "opsz"],
 });
 
 export const metadata: Metadata = {
-  title: "AeroTravel | Discover Extraordinary Places & AI Itinerary Planner",
-  description: "Explore the world's most beautiful destinations, generate custom AI itineraries, and book handpicked luxury travel packages. Your premium travel companion.",
+  title: "AeroTravel | Premium Travel Engine & Boarding Pass Itineraries",
+  description: "Bespoke AI travel itineraries and passport-style package bookings.",
 };
 
 export default function RootLayout({
@@ -24,21 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
-      <head>
-        <script dangerouslySetInnerHTML={{__html: `
-          (function() {
-            try {
-              var theme = localStorage.getItem('theme') || 'light';
-              if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
-              } else {
-                document.documentElement.classList.remove('dark');
-              }
-            } catch (e) {}
-          })();
-        `}} />
-      </head>
+    <html lang="en" className={`${inter.variable} ${fraunces.variable} dark`}>
       <body className="font-sans antialiased min-h-screen bg-bg-main text-fg-main">
         <AuthProvider>
           {children}

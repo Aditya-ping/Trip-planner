@@ -226,6 +226,16 @@ Travel-itenary planner/
 
 ---
 
+## 🔒 Data Collection & Privacy Notice
+
+AeroTravel collects minimal user information (name, email address, and booking details) solely to generate travel itineraries and process mock booking entries within the application.
+
+* **Academic & Demo Scope**: This application is an academic/demo project for demonstration purposes. It is not intended for commercial production, real payment processing, or handling personal data at scale.
+* **Ephemeral Database Note**: This deployment uses SQLite on ephemeral storage — saved trips and bookings reset on redeploy. For a persistent live version, migrate to a hosted Postgres instance.
+* **Third-Party Data Sharing**: No personal data is shared with third parties, beyond the necessary external API queries used to fetch live mapping, flight, and hotel data (Geoapify, Wikipedia, Xotelo, Duffel, and similar APIs).
+
+---
+
 ## ⚡ Getting Started & Running Locally
 
 ### **Prerequisites**

@@ -74,14 +74,14 @@ export default function Testimonials() {
         {/* Navigation Buttons Desktop */}
         <button
           onClick={handlePrev}
-          className="absolute -left-16 lg:-left-24 top-1/2 -translate-y-1/2 p-3 rounded-full border border-border-color bg-card-bg hover:bg-fg-main/5 text-fg-main transition-all scale-90 hover:scale-100 hidden md:flex cursor-pointer"
+          className="absolute -left-16 lg:-left-24 top-1/2 -translate-y-1/2 p-3 rounded-full border border-border-color bg-card-bg hover:bg-fg-main/5 text-fg-main transition-all opacity-60 hover:opacity-100 hidden md:flex cursor-pointer"
           aria-label="Previous Review"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
         <button
           onClick={handleNext}
-          className="absolute -right-16 lg:-right-24 top-1/2 -translate-y-1/2 p-3 rounded-full border border-border-color bg-card-bg hover:bg-fg-main/5 text-fg-main transition-all scale-90 hover:scale-100 hidden md:flex cursor-pointer"
+          className="absolute -right-16 lg:-right-24 top-1/2 -translate-y-1/2 p-3 rounded-full border border-border-color bg-card-bg hover:bg-fg-main/5 text-fg-main transition-all opacity-60 hover:opacity-100 hidden md:flex cursor-pointer"
           aria-label="Next Review"
         >
           <ChevronRight className="w-5 h-5" />

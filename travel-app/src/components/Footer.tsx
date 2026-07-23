@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Compass, Send, CheckCircle2 } from "lucide-react";
+import { Compass, Send, CheckCircle2, X, ShieldCheck } from "lucide-react";
 
 const Instagram = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -33,6 +33,7 @@ const Youtube = (props: React.SVGProps<SVGSVGElement>) => (
 export default function Footer() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,16 +47,16 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-border-color bg-card-bg/25 pt-20 pb-8 text-fg-main overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 border-b border-border-color pb-16">
+    <footer className="border-t border-[#C9A15A]/20 bg-[#161B2C] pt-20 pb-8 text-[#EDEAE2] overflow-hidden relative">
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 border-b border-[#C9A15A]/15 pb-16">
         
         {/* Brand Column */}
         <div className="lg:col-span-4 space-y-6">
-          <a href="#" className="flex items-center gap-2 group">
-            <div className="p-2 rounded-xl bg-gradient-to-tr from-accent-primary to-accent-sunset text-white shadow-lg shadow-accent-primary/25">
-              <Compass className="w-5 h-5 animate-pulse-slow" />
+          <a href="#" className="flex items-center gap-2.5 group">
+            <div className="p-2 rounded-md bg-[#C9A15A]/10 border border-[#C9A15A]/40 text-[#C9A15A]">
+              <Compass className="w-5 h-5" />
             </div>
-            <span className="font-heading font-black text-xl tracking-tight bg-gradient-to-r from-accent-primary to-accent-sunset bg-clip-text text-transparent">
+            <span className="font-display font-bold text-xl tracking-tight text-[#EDEAE2]">
               AeroTravel
             </span>
           </a>
@@ -77,7 +78,7 @@ export default function Footer() {
                 <a
                   key={i}
                   href={soc.href}
-                  className="p-2.5 rounded-xl border border-border-color hover:bg-card-bg text-text-muted hover:text-accent-primary transition-all duration-200"
+                  className="p-2.5 rounded-md border border-[#C9A15A]/20 hover:border-[#C9A15A]/50 hover:bg-[#C9A15A]/10 text-[#8A94A6] hover:text-[#C9A15A] transition-colors duration-200"
                 >
                   <Icon className="w-4 h-4" />
                 </a>
@@ -89,32 +90,32 @@ export default function Footer() {
         {/* Navigation Maps Columns */}
         <div className="lg:col-span-5 grid grid-cols-2 sm:grid-cols-3 gap-8">
           <div>
-            <h4 className="font-heading font-extrabold text-xs uppercase tracking-widest text-text-muted mb-4">Discover</h4>
+            <h4 className="font-mono text-[11px] font-bold uppercase tracking-widest text-[#8A94A6] mb-4">Discover</h4>
             <ul className="space-y-3 text-xs">
-              <li><a href="#destinations" className="text-text-muted hover:text-accent-primary transition-colors">Destinations</a></li>
-              <li><a href="#experiences" className="text-text-muted hover:text-accent-primary transition-colors">Experiences</a></li>
-              <li><a href="#packages" className="text-text-muted hover:text-accent-primary transition-colors">Packages</a></li>
-              <li><a href="#ai-planner" className="text-text-muted hover:text-accent-primary transition-colors">AI Itinerary</a></li>
+              <li><a href="#destinations" className="text-[#8A94A6] hover:text-[#C9A15A] transition-colors">Destinations</a></li>
+              <li><a href="#experiences" className="text-[#8A94A6] hover:text-[#C9A15A] transition-colors">Experiences</a></li>
+              <li><a href="#packages" className="text-[#8A94A6] hover:text-[#C9A15A] transition-colors">Packages</a></li>
+              <li><a href="#ai-planner" className="text-[#8A94A6] hover:text-[#C9A15A] transition-colors">AI Itinerary</a></li>
             </ul>
           </div>
           
           <div>
-            <h4 className="font-heading font-extrabold text-xs uppercase tracking-widest text-text-muted mb-4">Support</h4>
+            <h4 className="font-mono text-[11px] font-bold uppercase tracking-widest text-[#8A94A6] mb-4">Support</h4>
             <ul className="space-y-3 text-xs">
-              <li><a href="#" className="text-text-muted hover:text-accent-primary transition-colors">Help Center</a></li>
-              <li><a href="#" className="text-text-muted hover:text-accent-primary transition-colors">Safety Guides</a></li>
-              <li><a href="#" className="text-text-muted hover:text-accent-primary transition-colors">Booking Policy</a></li>
-              <li><a href="#" className="text-text-muted hover:text-accent-primary transition-colors">Contact Us</a></li>
+              <li><a href="#" className="text-[#8A94A6] hover:text-[#C9A15A] transition-colors">Help Center</a></li>
+              <li><a href="#" className="text-[#8A94A6] hover:text-[#C9A15A] transition-colors">Safety Guides</a></li>
+              <li><a href="#" className="text-[#8A94A6] hover:text-[#C9A15A] transition-colors">Booking Policy</a></li>
+              <li><a href="#" className="text-[#8A94A6] hover:text-[#C9A15A] transition-colors">Contact Us</a></li>
             </ul>
           </div>
 
           <div className="col-span-2 sm:col-span-1">
-            <h4 className="font-heading font-extrabold text-xs uppercase tracking-widest text-text-muted mb-4">Company</h4>
+            <h4 className="font-mono text-[11px] font-bold uppercase tracking-widest text-[#8A94A6] mb-4">Company</h4>
             <ul className="space-y-3 text-xs">
-              <li><a href="#" className="text-text-muted hover:text-accent-primary transition-colors">About Us</a></li>
-              <li><a href="#" className="text-text-muted hover:text-accent-primary transition-colors">Careers</a></li>
-              <li><a href="#" className="text-text-muted hover:text-accent-primary transition-colors">Partnerships</a></li>
-              <li><a href="#" className="text-text-muted hover:text-accent-primary transition-colors">Press room</a></li>
+              <li><a href="#" className="text-[#8A94A6] hover:text-[#C9A15A] transition-colors">About Us</a></li>
+              <li><a href="#" className="text-[#8A94A6] hover:text-[#C9A15A] transition-colors">Careers</a></li>
+              <li><a href="#" className="text-[#8A94A6] hover:text-[#C9A15A] transition-colors">Partnerships</a></li>
+              <li><a href="#" className="text-[#8A94A6] hover:text-[#C9A15A] transition-colors">Press room</a></li>
             </ul>
           </div>
         </div>
@@ -134,7 +135,7 @@ export default function Footer() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
-                className="w-full px-4 py-3 rounded-xl border border-border-color bg-bg-main text-xs font-semibold focus:outline-none pr-10"
+                className="w-full px-4 py-3 rounded-md border border-[#C9A15A]/25 bg-[#0B0F1A] text-[#EDEAE2] text-xs font-semibold placeholder:text-[#8A94A6] focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A] transition-all pr-10"
               />
               <button
                 type="submit"
@@ -158,14 +159,59 @@ export default function Footer() {
       {/* Copyrights and Terms */}
       <div className="max-w-7xl mx-auto px-6 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] text-text-muted">
         <div>
-          © {currentYear} AeroTravel Technologies Private Limited. All rights reserved.
+          © {currentYear} AeroTravel Technologies Private Limited. All rights reserved. (Academic & Demo Project)
         </div>
         <div className="flex gap-6">
-          <a href="#" className="hover:text-accent-primary transition-colors">Privacy Policy</a>
+          <button 
+            onClick={() => setShowPrivacyModal(true)} 
+            className="hover:text-accent-primary transition-colors cursor-pointer"
+          >
+            Privacy & Data Notice
+          </button>
           <a href="#" className="hover:text-accent-primary transition-colors">Terms of Service</a>
           <a href="#" className="hover:text-accent-primary transition-colors">Sitemap</a>
         </div>
       </div>
+
+      {/* Privacy & Data Collection Modal */}
+      {showPrivacyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#161B2C] border border-[#C9A15A]/40 rounded-xl p-6 max-w-md w-full shadow-2xl text-[#EDEAE2] space-y-4 relative">
+            <button 
+              onClick={() => setShowPrivacyModal(false)}
+              className="absolute top-4 right-4 text-[#8A94A6] hover:text-[#C9A15A] transition-colors p-1"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2 text-[#C9A15A]">
+              <ShieldCheck className="w-5 h-5" />
+              <h3 className="font-display font-bold text-base">Privacy & Data Collection Notice</h3>
+            </div>
+
+            <div className="text-xs text-[#8A94A6] leading-relaxed space-y-3">
+              <p>
+                <strong className="text-[#EDEAE2]">Data Collected:</strong> AeroTravel collects minimal user information (guest name, email address, and booking details) strictly to generate trip itineraries and process mock booking entries within the application.
+              </p>
+              <p>
+                <strong className="text-[#EDEAE2]">Academic & Demo Scope:</strong> This application is an academic/demo project for demonstration purposes. It is not intended for commercial production, real payment processing, or handling personal data at scale.
+              </p>
+              <p>
+                <strong className="text-[#EDEAE2]">Third-Party Sharing:</strong> No personal user data is shared with third parties, beyond necessary external API queries used to fetch live mapping, hotel, and flight data (Geoapify, Wikipedia, Xotelo, Duffel, and similar APIs).
+              </p>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                onClick={() => setShowPrivacyModal(false)}
+                className="px-4 py-2 bg-[#C9A15A]/15 border border-[#C9A15A]/50 text-[#C9A15A] rounded-md text-xs font-semibold hover:bg-[#C9A15A]/25 transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </footer>
   );
 }

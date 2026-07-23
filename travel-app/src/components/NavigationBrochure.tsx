@@ -424,7 +424,7 @@ export default function NavigationBrochure({ destinationName, onClose }: Navigat
                           onMouseLeave={() => setHoveredNode(null)}
                         >
                           <motion.div
-                            whileHover={{ scale: 1.15 }}
+                            whileHover={{ scale: 1.06 }}
                             className={`w-12 h-12 rounded-full flex items-center justify-center border font-bold text-xs shadow-lg transition-all ${
                               isHovered
                                 ? "bg-accent-primary text-white border-accent-primary ring-4 ring-accent-primary/20 scale-110"
@@ -582,7 +582,7 @@ export default function NavigationBrochure({ destinationName, onClose }: Navigat
           </span>
           <button
             onClick={onClose}
-            className="px-6 py-2.5 rounded-xl bg-accent-primary hover:bg-accent-sunset text-white text-xs font-bold transition-all shadow-md hover:scale-[1.02] active:scale-95 cursor-pointer"
+            className="px-6 py-2.5 rounded-xl bg-accent-primary hover:bg-accent-sunset text-white text-xs font-bold transition-colors shadow-md cursor-pointer"
           >
             Acknowledge & Close
           </button>

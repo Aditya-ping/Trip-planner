@@ -2,6 +2,7 @@ import pytest
 from utils.distance import (
     calculate_distance,
     estimate_travel_cost,
+    get_real_route,
     calculate_route_distance,
     nearest_neighbor_route,
     two_opt,
@@ -11,7 +12,7 @@ from utils.distance import (
 # ── 1. Haversine Distance Tests ───────────────────────────────────
 
 @pytest.mark.parametrize("lat1, lon1, lat2, lon2, min_expected, max_expected", [
-    # Mumbai to Pune (~118-120 km)
+    # Mumbai to Pune (~118-125 km)
     (18.9220, 72.8347, 18.5204, 73.8567, 115.0, 125.0),
     # Delhi to Agra (~175-185 km)
     (28.6139, 77.2090, 27.1767, 78.0081, 175.0, 185.0),
@@ -22,37 +23,49 @@ from utils.distance import (
 ])
 def test_haversine_distance_known_coordinates(lat1, lon1, lat2, lon2, min_expected, max_expected):
     """
-    Tests Haversine distance calculation against known geographical coordinate pairs.
+    Tests pure Haversine distance calculation against known geographical coordinate pairs.
     """
     dist = calculate_distance(lat1, lon1, lat2, lon2)
     assert min_expected <= dist <= max_expected, f"Distance {dist} km out of expected range [{min_expected}, {max_expected}]"
 
 
-# ── 2. Cab Fare Calculation Tests ─────────────────────────────────
+# ── 2. Cab Fare & Directions API Tests ────────────────────────────
 
-def test_cab_fare_short_distance_minimum():
+def test_cab_fare_minimum_threshold():
     """
-    Tests cab fare for very short distance (5 km).
-    Validates if the calculation hits the ₹150 minimum fare threshold.
+    Tests that cab fare calculation enforces the ₹150 minimum fare threshold.
+    Formula: 250 + (road_km * 18), min 150.
     """
-    fare = estimate_travel_cost(5.0)
-    assert fare == 150, f"Expected minimum fare of ₹150 for short distance, but got ₹{fare}"
-
-
-def test_cab_fare_mid_range_distance():
-    """
-    Tests cab fare calculation for mid-range distance (25.4 km).
-    """
-    fare = estimate_travel_cost(25.4)
-    assert fare == 254, f"Expected ₹254 for 25.4 km, but got ₹{fare}"
+    fare = estimate_travel_cost(5.0, is_road_distance=True)
+    assert fare >= 150, f"Expected minimum fare of at least ₹150 for short distance, but got ₹{fare}"
+    assert fare == 340, f"Expected ₹340 for 5km road distance (250 + 5*18), got ₹{fare}"
 
 
-def test_cab_fare_rounding_behavior():
+def test_cab_fare_haversine_1_3x_multiplier():
     """
-    Tests rounding behavior of cab fare calculation (e.g. 12.37 km -> 123.7 -> 124).
+    Tests cab fare calculation when converting straight-line Haversine distance to road distance (x1.3).
+    10.0 km Haversine -> 13.0 km road -> 250 + (13 * 18) = 484.
     """
-    fare = estimate_travel_cost(12.37)
-    assert fare == 124, f"Expected rounded fare ₹124 for 12.37 km, but got ₹{fare}"
+    fare = estimate_travel_cost(10.0, is_road_distance=False)
+    assert fare == 484
+
+
+def test_get_real_route_and_caching():
+    """
+    Tests get_real_route fetches road distance and caches response per stop-pair.
+    """
+    # Jaipur Amber Palace to Hawa Mahal
+    lat1, lon1 = 26.9855, 75.8513
+    lat2, lon2 = 26.9239, 75.8267
+
+    route1 = get_real_route(lat1, lon1, lat2, lon2)
+    assert "distance" in route1
+    assert "duration" in route1
+    assert route1["distance"] > 0
+
+    # Second call should return cached response
+    route2 = get_real_route(lat1, lon1, lat2, lon2)
+    assert route2["distance"] == route1["distance"]
 
 
 # ── 3. 2-Opt & TSP Heuristic Tests ────────────────────────────────

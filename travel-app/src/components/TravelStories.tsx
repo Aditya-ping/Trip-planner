@@ -123,18 +123,14 @@ export default function TravelStories() {
             const likeCount = likesState[story.id]?.count || story.likes;
             
             return (
-              <motion.div
+              <div
                 key={story.id}
                 onClick={() => setSelectedStory(story)}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.5 }}
                 className={`break-inside-avoid relative ${sizeClass} rounded-3xl overflow-hidden shadow-premium group cursor-pointer border border-border-color`}
               >
                 {/* Background image */}
                 <div
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-750 group-hover:scale-110"
+                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
                   style={{ backgroundImage: `url(${story.image})` }}
                 />
                 
@@ -172,7 +168,7 @@ export default function TravelStories() {
                     </span>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             );
           })}
         </div>

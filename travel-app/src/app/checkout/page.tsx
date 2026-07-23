@@ -6,11 +6,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, CreditCard, ShieldCheck, Calendar, Users, 
   MapPin, CheckCircle2, Ticket, Sparkles, Loader2, QrCode, Building, ExternalLink, PlaneTakeoff,
-  X, Armchair, Compass, AlertCircle
+  X, Armchair, Compass, AlertCircle, Train
 } from "lucide-react";
 import { useHotels } from "@/hooks/useHotels";
 import { useFlights, Flight } from "@/hooks/useFlights";
+import { useTrains } from "@/hooks/useTrains";
 import NavigationBrochure from "@/components/NavigationBrochure";
+import TicketDivider from "@/components/TicketDivider";
+import { API_BASE_URL } from "@/utils/config";
+import StampSeal from "@/components/StampSeal";
 import { useAuth } from "@/context/AuthContext";
 
 // Package data matching FeaturedPackages
@@ -211,6 +215,17 @@ function CheckoutContent() {
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const [showSeatMap, setShowSeatMap] = useState<boolean>(false);
   const [showBrochure, setShowBrochure] = useState<boolean>(false);
+
+  // Train State
+  const [includeTrains, setIncludeTrains] = useState<boolean>(false);
+  const [selectedTrain, setSelectedTrain] = useState<import("@/hooks/useTrains").TrainOption | null>(null);
+  const trainCitySearch = packageIdParam === "custom"
+    ? (searchParams.get("city") || "")
+    : (pkg?.id === 1 ? "Jaipur" : pkg?.id === 2 ? "Kochi" : "Leh Ladakh");
+  const { trains: availableTrains, loading: trainsLoading } = useTrains(
+    includeTrains ? (originCityIata || "") : "",
+    includeTrains ? trainCitySearch : ""
+  );
 
   useEffect(() => {
     setSelectedSeats([]);
@@ -442,6 +457,22 @@ function CheckoutContent() {
     }
   };
 
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if ((window as any).Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -451,57 +482,120 @@ function CheckoutContent() {
       return;
     }
 
-    if (paymentMethod === "card") {
-      const cleanNum = cardNumber.replace(/\D/g, "");
-      const isTestPattern = cleanNum.startsWith("4242") || cleanNum.startsWith("4000") || cleanNum.startsWith("4111") || cleanNum.startsWith("5555") || cleanNum.startsWith("3700") || /^0+$/.test(cleanNum);
+    setIsProcessing(true);
+    setCardError(null);
 
-      if (!isTestPattern) {
-        setCardError("DEMO MODE SECURITY: Real card numbers are blocked. Please click 'Fill Demo Test Card' or use a test number starting with 4242.");
-        return;
-      }
+    const scriptLoaded = await loadRazorpayScript();
+    if (!scriptLoaded) {
+      alert("Failed to load Razorpay payment gateway script. Please check your internet connection.");
+      setIsProcessing(false);
+      return;
     }
 
-    setCardError(null);
-    setStep(3);
-    
-    const ref = "AERO-" + Math.floor(100000 + Math.random() * 900000);
-    const flightInfoStr = includeFlights && selectedFlight 
-      ? `${selectedFlight.airline} (${selectedFlight.from} → ${selectedFlight.to})${selectedFlight.flight_no ? ` [${selectedFlight.flight_no}]` : ''}${selectedSeats.length > 0 ? ` (Seats: ${selectedSeats.join(", ")})` : ''}` 
-      : null;
-      
     try {
-      const response = await fetch("http://127.0.0.1:5000/api/bookings", {
+      // 1. Create Razorpay Order server-side
+      const orderResp = await fetch(`${API_BASE_URL}/api/payment/create-order`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({
-          reference_id: ref,
-          guest_name: fullName,
-          email: email,
-          destination: citySearch,
-          hotel_name: selectedHotel?.name || "None",
-          room_type: selectedRoom?.type || "Standard Room",
-          check_in: travelDate,
-          check_out: addDaysToDateStr(travelDate, nights),
-          guests: travelers,
-          total_cost: grandTotal,
-          flight_info: flightInfoStr,
-        }),
+          amount: grandTotal,
+          currency: "INR"
+        })
       });
-      const data = await response.json();
-      if (data.success) {
-        setBookingRef(ref);
-        setStep(4);
-      } else {
-        alert("Booking failed: " + (data.error || "Unknown error"));
-        setStep(2);
+
+      const orderData = await orderResp.json();
+      if (!orderData.success) {
+        alert("Failed to initialize payment: " + (orderData.error || "Order creation failed"));
+        setIsProcessing(false);
+        return;
       }
+
+      const ref = "AERO-" + Math.floor(100000 + Math.random() * 900000);
+      const flightInfoStr = includeFlights && selectedFlight 
+        ? `${selectedFlight.airline} (${selectedFlight.from} → ${selectedFlight.to})${selectedFlight.flight_no ? ` [${selectedFlight.flight_no}]` : ''}${selectedSeats.length > 0 ? ` (Seats: ${selectedSeats.join(", ")})` : ''}` 
+        : null;
+
+      const bookingPayload = {
+        reference_id: ref,
+        guest_name: fullName,
+        email: email,
+        destination: citySearch,
+        hotel_name: selectedHotel?.name || "None",
+        room_type: selectedRoom?.type || "Standard Room",
+        check_in: travelDate,
+        check_out: addDaysToDateStr(travelDate, nights),
+        guests: travelers,
+        total_cost: grandTotal,
+        flight_info: flightInfoStr,
+      };
+
+      // 2. Open Razorpay Checkout.js Widget
+      const options = {
+        key: orderData.key,
+        amount: orderData.amount,
+        currency: orderData.currency || "INR",
+        name: "AeroTravel",
+        description: pkg.title,
+        order_id: orderData.id,
+        prefill: {
+          name: fullName,
+          email: email,
+          contact: phone
+        },
+        theme: {
+          color: "#0284c7"
+        },
+        handler: async function (response: any) {
+          setStep(3); // Show processing screen
+          try {
+            // 3. Verify signature server-side & book
+            const verifyResp = await fetch(`${API_BASE_URL}/api/payment/verify-and-book`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id || orderData.id,
+                razorpay_payment_id: response.razorpay_payment_id || `pay_demo_${Date.now()}`,
+                razorpay_signature: response.razorpay_signature || "demo_signature",
+                booking: bookingPayload
+              })
+            });
+
+            const verifyData = await verifyResp.json();
+            if (verifyData.success) {
+              setBookingRef(verifyData.reference_id || ref);
+              setStep(4); // Show digital boarding pass & invoice
+            } else {
+              alert("Payment verification failed: " + (verifyData.error || "Signature invalid"));
+              setStep(2);
+            }
+          } catch (verifyErr) {
+            console.error("Verification error:", verifyErr);
+            alert("Verification failed due to a network error.");
+            setStep(2);
+          } finally {
+            setIsProcessing(false);
+          }
+        },
+        modal: {
+          ondismiss: function() {
+            setIsProcessing(false);
+          }
+        }
+      };
+
+      const razorpayInstance = new (window as any).Razorpay(options);
+      razorpayInstance.open();
+
     } catch (err) {
-      console.error("Payment/Booking creation error:", err);
-      alert("Booking failed due to a network error. Please try again.");
-      setStep(2);
+      console.error("Payment initialization error:", err);
+      alert("Payment failed due to a network error. Please try again.");
+      setIsProcessing(false);
     }
   };
 
@@ -554,7 +648,7 @@ function CheckoutContent() {
               className="grid grid-cols-1 lg:grid-cols-12 gap-8"
             >
               {/* Form Side */}
-              <div className="lg:col-span-7 glassmorphism rounded-3xl p-6 sm:p-8 space-y-8">
+              <div className="lg:col-span-7 bg-[#161B2C] rounded-md border border-[#C9A15A]/30 p-6 sm:p-8 space-y-8">
                 <h2 className="font-heading font-black text-2xl text-fg-main tracking-tight mb-6 flex items-center gap-2">
                   <Users className="w-6 h-6 text-accent-sunset" />
                   Traveler & Accommodation Details
@@ -568,7 +662,7 @@ function CheckoutContent() {
                       placeholder="e.g. John Doe"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-border-color focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 outline-none transition-all text-sm bg-card-bg text-fg-main"
+                      className="w-full px-4 py-3 rounded-md border border-[#C9A15A]/25 bg-[#0B0F1A] text-[#EDEAE2] text-sm focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A] transition-all placeholder:text-[#8A94A6]"
                     />
                     {formErrors.fullName && <p className="text-xs text-accent-sunset mt-1">{formErrors.fullName}</p>}
                   </div>
@@ -581,7 +675,7 @@ function CheckoutContent() {
                         placeholder="john@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-border-color focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 outline-none transition-all text-sm bg-card-bg text-fg-main"
+                        className="w-full px-4 py-3 rounded-md border border-[#C9A15A]/25 bg-[#0B0F1A] text-[#EDEAE2] text-sm focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A] transition-all placeholder:text-[#8A94A6]"
                       />
                       {formErrors.email && <p className="text-xs text-accent-sunset mt-1">{formErrors.email}</p>}
                     </div>
@@ -592,7 +686,7 @@ function CheckoutContent() {
                         placeholder="e.g. 9876543210"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-border-color focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 outline-none transition-all text-sm bg-card-bg text-fg-main"
+                        className="w-full px-4 py-3 rounded-md border border-[#C9A15A]/25 bg-[#0B0F1A] text-[#EDEAE2] text-sm focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A] transition-all placeholder:text-[#8A94A6]"
                       />
                       {formErrors.phone && <p className="text-xs text-accent-sunset mt-1">{formErrors.phone}</p>}
                     </div>
@@ -606,7 +700,7 @@ function CheckoutContent() {
                         value={travelDate}
                         min={new Date().toISOString().split("T")[0]}
                         onChange={(e) => setTravelDate(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-border-color focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 outline-none transition-all text-sm bg-card-bg text-fg-main"
+                        className="w-full px-4 py-3 rounded-md border border-[#C9A15A]/25 bg-[#0B0F1A] text-[#EDEAE2] text-sm focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A] transition-all placeholder:text-[#8A94A6]"
                       />
                       {formErrors.travelDate && <p className="text-xs text-accent-sunset mt-1">{formErrors.travelDate}</p>}
                     </div>
@@ -633,7 +727,7 @@ function CheckoutContent() {
                   </div>
 
                   {/* Guide Toggle */}
-                  <div className="p-4 rounded-xl border border-border-color bg-card-bg flex items-center justify-between">
+                  <div className="p-4 rounded-md border border-[#C9A15A]/25 bg-[#0B0F1A] flex items-center justify-between">
                     <div className="flex items-start gap-3">
                       <input
                         id="include-guide"
@@ -739,7 +833,7 @@ function CheckoutContent() {
                   )}
 
                   {/* Flight Options */}
-                  <div className="p-4 rounded-xl border border-border-color bg-card-bg flex flex-col gap-4 mb-6">
+                  <div className="p-4 rounded-md border border-[#C9A15A]/25 bg-[#0B0F1A] flex flex-col gap-4 mb-6">
                     <div className="flex items-start gap-3">
                       <input
                         id="include-flights"
@@ -766,7 +860,7 @@ function CheckoutContent() {
                           <select
                             value={originCityIata}
                             onChange={(e) => setOriginCityIata(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl border border-border-color focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 outline-none text-sm bg-card-bg text-fg-main"
+                            className="w-full px-4 py-3 rounded-md border border-[#C9A15A]/25 bg-[#0B0F1A] text-[#EDEAE2] text-sm focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A] transition-all placeholder:text-[#8A94A6]"
                           >
                             <option value="">Select Origin City</option>
                             {cities.map(c => (
@@ -835,7 +929,7 @@ function CheckoutContent() {
                                     </button>
                                   </div>
                                 ) : (
-                                  <div className="p-3.5 rounded-xl border border-border-color bg-fg-main/5 flex justify-between items-center gap-4">
+                                  <div className="p-3.5 rounded-md border border-[#C9A15A]/25 bg-[#0B0F1A]/50 flex justify-between items-center gap-4">
                                     <div className="flex flex-wrap gap-2">
                                       {selectedSeats.map(seat => (
                                         <span key={seat} className="px-2.5 py-1 rounded bg-accent-primary text-white text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1">
@@ -864,6 +958,82 @@ function CheckoutContent() {
                         )}
                       </div>
                     )}
+
+                    {/* Domestic Train Options (Multi-Modal) */}
+                    <div className="p-4 rounded-md border border-[#C9A15A]/25 bg-[#0B0F1A] flex flex-col gap-4 mb-6">
+                      <div className="flex items-start gap-3">
+                        <input
+                          id="include-trains"
+                          type="checkbox"
+                          checked={includeTrains}
+                          onChange={(e) => {
+                            setIncludeTrains(e.target.checked);
+                            if (!e.target.checked) setSelectedTrain(null);
+                          }}
+                          className="w-4 h-4 text-accent-primary focus:ring-accent-primary border-gray-300 rounded mt-1 cursor-pointer"
+                        />
+                        <label htmlFor="include-trains" className="cursor-pointer">
+                          <span className="block text-xs font-bold text-fg-main uppercase tracking-wider flex items-center gap-1.5">
+                            <Train className="w-4 h-4 text-emerald-400" /> Multi-Modal Domestic Trains (Shatabdi / Vande Bharat)
+                          </span>
+                          <span className="block text-[10px] text-text-muted mt-0.5">
+                            Explore rail connections between {originCityIata || "Origin"} and {citySearch}.
+                          </span>
+                        </label>
+                      </div>
+
+                      {includeTrains && (
+                        <div className="pl-7 space-y-4">
+                          {/* Prominent Unofficial Data Disclaimer */}
+                          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 space-y-1">
+                            <div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
+                              <span>⚡ UNOFFICIAL / THIRD-PARTY RAIL DATA</span>
+                              <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-[8px]">NO UPTIME GUARANTEE</span>
+                            </div>
+                            <p className="text-[10px] text-amber-200/90 leading-relaxed">
+                              IRCTC does not provide a public open API. Train schedules and fares are retrieved via unofficial third-party data providers for informational trip-planning purposes only.
+                            </p>
+                          </div>
+
+                          {trainsLoading ? (
+                            <div className="flex items-center gap-2 text-accent-primary text-xs animate-pulse">
+                              <Loader2 className="w-4 h-4 animate-spin" /> Searching Indian Railways schedules...
+                            </div>
+                          ) : availableTrains.length > 0 ? (
+                            <div className="space-y-3">
+                              <label className="block text-xs font-bold uppercase tracking-wider text-text-muted">Available Train Schedules</label>
+                              <div className="grid grid-cols-1 gap-3 max-h-60 overflow-y-auto pr-1">
+                                {availableTrains.map((train) => (
+                                  <div
+                                    key={train.train_number}
+                                    onClick={() => setSelectedTrain(train)}
+                                    className={`p-3 rounded-xl border transition-all cursor-pointer flex justify-between items-center ${
+                                      selectedTrain?.train_number === train.train_number
+                                        ? "border-emerald-500 bg-emerald-500/10 ring-1 ring-emerald-500"
+                                        : "border-border-color bg-card-bg hover:bg-fg-main/5"
+                                    }`}
+                                  >
+                                    <div className="min-w-0 flex-1 pr-3 text-left">
+                                      <h5 className="text-xs font-bold text-fg-main truncate">{train.train_name} ({train.train_number})</h5>
+                                      <p className="text-[10px] text-text-muted mt-0.5">
+                                        {train.departure_time} → {train.arrival_time} ({train.duration}) • {train.classes.join(", ")}
+                                      </p>
+                                      <span className="text-[9px] text-amber-400/80 font-mono mt-1 block">⚡ Unofficial Third-Party Schedule</span>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                      <span className="text-xs font-extrabold text-emerald-400 block">₹{train.fare_min.toLocaleString("en-IN")} - ₹{train.fare_max.toLocaleString("en-IN")}</span>
+                                      <span className="text-[9px] text-text-muted">est. fare</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-text-muted">No train schedules found for this route.</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <button
@@ -878,8 +1048,8 @@ function CheckoutContent() {
 
               {/* Summary Side */}
               <div className="lg:col-span-5 space-y-6">
-                <div className="glassmorphism rounded-3xl p-6 overflow-hidden relative">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-accent-primary/10 rounded-full blur-2xl pointer-events-none" />
+                <div className="bg-[#161B2C] rounded-md border border-[#C9A15A]/30 p-6 overflow-hidden relative">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-[#C9A15A]/8 rounded-full blur-2xl pointer-events-none" />
                   <div className="relative h-44 rounded-2xl overflow-hidden mb-6">
                     <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${pkg.image})` }} />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -980,7 +1150,7 @@ function CheckoutContent() {
             >
               {/* Payment Methods Side */}
               <div className="lg:col-span-7 space-y-6">
-                <div className="glassmorphism rounded-3xl p-6 sm:p-8">
+                <div className="bg-[#161B2C] rounded-md border border-[#C9A15A]/30 p-6 sm:p-8">
                   <h2 className="font-heading font-black text-2xl text-fg-main tracking-tight mb-6 flex items-center gap-2">
                     <CreditCard className="w-6 h-6 text-accent-sunset" />
                     Select Payment Method
@@ -1020,29 +1190,17 @@ function CheckoutContent() {
                   <form onSubmit={handlePay} className="space-y-6">
                     {paymentMethod === "card" && (
                       <div className="space-y-6">
-                        {/* Persistent Demo Warning Banner */}
-                        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-start gap-3 shadow-inner">
-                          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                        {/* Razorpay Test Mode Banner */}
+                        <div className="p-4 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-400 flex items-start gap-3 shadow-inner">
+                          <ShieldCheck className="w-5 h-5 shrink-0 mt-0.5 text-sky-400" />
                           <div className="space-y-1.5 text-xs">
-                            <div className="font-extrabold uppercase tracking-wider text-amber-400">
-                              ⚠️ DEMO MODE — DO NOT ENTER REAL CARD DETAILS
+                            <div className="font-extrabold uppercase tracking-wider text-sky-300 flex items-center gap-1.5">
+                              <span>💳 RAZORPAY TEST MODE GATEWAY</span>
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-500/20 border border-sky-400/30">SANDBOX</span>
                             </div>
-                            <p className="text-[11px] opacity-90 leading-relaxed text-amber-200/90">
-                              This is a test checkout demonstration. Real credit cards are blocked for security. No payment is processed and no card info is stored.
+                            <p className="text-[11px] opacity-90 leading-relaxed text-sky-200/90">
+                              Clicking below will launch Razorpay&apos;s secure test checkout widget. You can use Razorpay&apos;s built-in test credentials (e.g. 4111 1111 1111 1111) or test UPI. Payment signature is verified server-side.
                             </p>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setCardName("Test Traveler");
-                                setCardNumber("4242 4242 4242 4242");
-                                setCardExpiry("12/28");
-                                setCardCvv("123");
-                                setCardError(null);
-                              }}
-                              className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[10px] uppercase tracking-wider transition-all cursor-pointer shadow-sm"
-                            >
-                              Fill Demo Test Card
-                            </button>
                           </div>
                         </div>
 
@@ -1051,121 +1209,6 @@ function CheckoutContent() {
                             {cardError}
                           </div>
                         )}
-
-                        {/* Interactive Visual Card Flipping */}
-                        <div className="flex justify-center mb-8 perspective">
-                          <motion.div
-                            animate={{ rotateY: isCardFlipped ? 180 : 0 }}
-                            transition={{ duration: 0.6 }}
-                            className="relative w-full max-w-sm h-48 rounded-2xl shadow-xl preserve-3d text-white font-mono cursor-pointer"
-                          >
-                            {/* Card Front */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-indigo-950 rounded-2xl p-6 flex flex-col justify-between backface-hidden">
-                              <div className="flex justify-between items-start">
-                                <span className="text-xs font-bold tracking-widest text-slate-400">AEROTRAVEL VISA</span>
-                                <CreditCard className="w-8 h-8 text-sky-400" />
-                              </div>
-                              <div className="text-lg tracking-[0.2em] my-4">
-                                {cardNumber || "•••• •••• •••• ••••"}
-                              </div>
-                              <div className="flex justify-between">
-                                <div>
-                                  <span className="text-[8px] text-slate-400 uppercase tracking-widest block">Card Holder</span>
-                                  <span className="text-xs tracking-wider uppercase">{cardName || "YOUR NAME"}</span>
-                                </div>
-                                <div>
-                                  <span className="text-[8px] text-slate-400 uppercase tracking-widest block">Expires</span>
-                                  <span className="text-xs tracking-wider">{cardExpiry || "MM/YY"}</span>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Card Back */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-indigo-950 rounded-2xl py-6 flex flex-col justify-between backface-hidden rotateY-180">
-                              <div className="w-full h-10 bg-slate-800" />
-                              <div className="px-6 flex justify-end items-center gap-3">
-                                <span className="text-[8px] text-slate-400 uppercase tracking-widest">CVV</span>
-                                <div className="bg-white text-slate-900 px-3 py-1.5 rounded text-sm font-bold tracking-widest">
-                                  {cardCvv || "•••"}
-                                </div>
-                              </div>
-                              <div className="px-6 text-[7px] text-slate-400 tracking-wider">
-                                VISA INTERNATIONAL SERVICE ASSISTANCE. SECURITIZED TRANSACTION PROTOCOL.
-                              </div>
-                            </div>
-                          </motion.div>
-                        </div>
-
-                        {/* Card Inputs */}
-                        <div className="space-y-4">
-                          <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-2">Cardholder Name</label>
-                            <input
-                              type="text"
-                              required
-                              placeholder="Name on card"
-                              value={cardName}
-                              onChange={(e) => setCardName(e.target.value)}
-                              onFocus={() => setIsCardFlipped(false)}
-                              className="w-full px-4 py-3 rounded-xl border border-border-color focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 outline-none transition-all text-sm bg-card-bg text-fg-main"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-2">Card Number</label>
-                            <input
-                              type="text"
-                              required
-                              placeholder="xxxx xxxx xxxx xxxx"
-                              maxLength={19}
-                              value={cardNumber}
-                              onChange={(e) => {
-                                const val = e.target.value.replace(/\D/g, "");
-                                const formatted = val.replace(/(.{4})/g, "$1 ").trim();
-                                setCardNumber(formatted);
-                              }}
-                              onFocus={() => setIsCardFlipped(false)}
-                              className="w-full px-4 py-3 rounded-xl border border-border-color focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 outline-none transition-all text-sm bg-card-bg text-fg-main"
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-2">Expiration Date</label>
-                              <input
-                                type="text"
-                                required
-                                placeholder="MM/YY"
-                                maxLength={5}
-                                value={cardExpiry}
-                                onChange={(e) => {
-                                  const val = e.target.value.replace(/\D/g, "");
-                                  if (val.length >= 2) {
-                                    setCardExpiry(val.slice(0, 2) + "/" + val.slice(2, 4));
-                                  } else {
-                                    setCardExpiry(val);
-                                  }
-                                }}
-                                onFocus={() => setIsCardFlipped(false)}
-                                className="w-full px-4 py-3 rounded-xl border border-border-color focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 outline-none transition-all text-sm bg-card-bg text-fg-main"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-2">CVV / CVC</label>
-                              <input
-                                type="password"
-                                required
-                                placeholder="•••"
-                                maxLength={3}
-                                value={cardCvv}
-                                onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ""))}
-                                onFocus={() => setIsCardFlipped(true)}
-                                onBlur={() => setIsCardFlipped(false)}
-                                className="w-full px-4 py-3 rounded-xl border border-border-color focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 outline-none transition-all text-sm bg-card-bg text-fg-main"
-                              />
-                            </div>
-                          </div>
-                        </div>
                       </div>
                     )}
 
@@ -1188,7 +1231,7 @@ function CheckoutContent() {
                             placeholder="username@okaxis"
                             value={upiId}
                             onChange={(e) => setUpiId(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl border border-border-color focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 outline-none transition-all text-sm bg-card-bg text-fg-main text-center"
+                            className="w-full px-4 py-3 rounded-md border border-[#C9A15A]/25 bg-[#0B0F1A] text-[#EDEAE2] text-sm focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A] transition-all text-center placeholder:text-[#8A94A6]"
                           />
                         </div>
                       </div>
@@ -1197,7 +1240,7 @@ function CheckoutContent() {
                     {paymentMethod === "netbanking" && (
                       <div className="space-y-4">
                         <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-2">Select Your Bank</label>
-                        <select className="w-full px-4 py-3 rounded-xl border border-border-color focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 outline-none transition-all text-sm bg-card-bg text-fg-main">
+                        <select className="w-full px-4 py-3 rounded-md border border-[#C9A15A]/25 bg-[#0B0F1A] text-[#EDEAE2] text-sm focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A] transition-all">
                           <option>SBI (State Bank of India)</option>
                           <option>HDFC Bank</option>
                           <option>ICICI Bank</option>
@@ -1209,16 +1252,27 @@ function CheckoutContent() {
 
                     <button
                       type="submit"
-                      className="w-full py-4 rounded-xl bg-accent-emerald hover:bg-accent-sunset text-white text-sm font-bold shadow-lg hover:shadow-xl hover:scale-[1.01] active:scale-95 transition-all duration-300 cursor-pointer flex items-center justify-center gap-2"
+                      disabled={isProcessing}
+                      className="w-full py-4 rounded-xl bg-accent-emerald hover:bg-accent-sunset text-white text-sm font-bold shadow-lg hover:shadow-xl hover:scale-[1.01] active:scale-95 transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Pay Securely ₹{grandTotal.toLocaleString("en-IN")}
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Opening Razorpay Gateway...
+                        </>
+                      ) : (
+                        <>
+                          <ShieldCheck className="w-4 h-4" />
+                          Pay with Razorpay (Test Mode) — ₹{grandTotal.toLocaleString("en-IN")}
+                        </>
+                      )}
                     </button>
                   </form>
                 </div>
               </div>
 
               {/* Order Summary Side */}
-              <div className="lg:col-span-5 glassmorphism rounded-3xl p-6 h-fit">
+              <div className="lg:col-span-5 bg-[#161B2C] rounded-md border border-[#C9A15A]/30 p-6 h-fit">
                 <h3 className="font-heading font-black text-lg text-fg-main tracking-tight mb-4">Booking Summary</h3>
                 <div className="space-y-3 text-xs text-text-muted mb-6">
                   <div className="flex justify-between">
@@ -1314,10 +1368,10 @@ function CheckoutContent() {
               className="max-w-2xl mx-auto text-center"
             >
               {/* Premium Ticket Receipt Presentation */}
-              <div className="glassmorphism rounded-3xl overflow-hidden shadow-2xl relative border border-white/20">
+              <div className="bg-[#161B2C] rounded-md border border-[#C9A15A]/40 overflow-hidden shadow-document relative">
                 {/* Header Banner */}
                 <div className="bg-gradient-to-r from-accent-primary to-accent-sunset p-8 text-white">
-                  <CheckCircle2 className="w-16 h-16 mx-auto mb-4 drop-shadow-md text-white animate-bounce" />
+                  <CheckCircle2 className="w-14 h-14 mx-auto mb-4 drop-shadow-md text-white" />
                   <h2 className="font-heading font-black text-3xl tracking-tight mb-2">Booking Confirmed!</h2>
                   <p className="text-white/80 text-xs uppercase tracking-widest font-bold">
                     Booking Reference: {bookingRef}
@@ -1326,9 +1380,8 @@ function CheckoutContent() {
 
                 {/* Ticket Details */}
                 <div className="p-8 space-y-6 text-left relative">
-                  {/* Decorative Ticket Circles */}
-                  <div className="absolute left-[-12px] top-[14%] w-6 h-6 rounded-full bg-bg-main border-r border-border-color" />
-                  <div className="absolute right-[-12px] top-[14%] w-6 h-6 rounded-full bg-bg-main border-l border-border-color" />
+                  {/* Earned Stamp Seal */}
+                  <StampSeal className="absolute top-4 right-6 z-20 hidden sm:inline-flex" />
 
                   <div className="grid grid-cols-2 gap-6 pt-4">
                     <div>
@@ -1362,7 +1415,7 @@ function CheckoutContent() {
                     )}
                   </div>
 
-                  <div className="border-t border-dashed border-border-color my-6" />
+                  <TicketDivider />
 
                   <div className="space-y-3">
                     <h4 className="text-xs font-bold text-fg-main uppercase tracking-wider flex items-center gap-1.5">
@@ -1404,7 +1457,7 @@ function CheckoutContent() {
                 <button
                   type="button"
                   onClick={() => router.push("/")}
-                  className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-border-color bg-card-bg/50 hover:bg-card-bg text-text-muted hover:text-fg-main text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-md border border-[#C9A15A]/30 bg-[#161B2C] hover:border-[#C9A15A]/60 text-[#8A94A6] hover:text-[#EDEAE2] text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
                 >
                   Go Back to Dashboard
                 </button>

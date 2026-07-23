@@ -3,6 +3,8 @@ from flask import Flask, render_template, request, redirect, jsonify, flash, g
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import json
 import os
 import sqlite3
@@ -11,6 +13,12 @@ from datetime import datetime, timedelta
 from utils.distance import calculate_distance, get_real_route, estimate_travel_cost, optimize_route
 from utils.migrate import run_migrations
 from utils.cache import get_cached_response, set_cached_response
+from utils.weather import get_open_meteo_forecast, generate_smart_packing_advisory
+from utils.payment import create_razorpay_order, verify_razorpay_signature
+from utils.notifications import send_booking_confirmation_email, send_booking_confirmation_sms
+from utils.aqi import get_air_quality
+from utils.trains import search_indian_trains
+from utils.translator import translate_place_description, SUPPORTED_LANGUAGES
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -105,11 +113,52 @@ AIRPORT_NOTES = {
 app = Flask(__name__)
 app.secret_key = "travelplanner_secret"
 
-# Enable CORS for the Next.js frontend at port 3000 and 3001
-CORS(app, resources={r"/api/*": {"origins": [
+# Enable CORS for local dev and deployed Next.js frontend (via FRONTEND_URL env var)
+allowed_origins = [
     "http://localhost:3000", "http://127.0.0.1:3000",
     "http://localhost:3001", "http://127.0.0.1:3001"
-]}})
+]
+env_frontend = os.getenv("FRONTEND_URL") or os.getenv("ALLOWED_ORIGINS")
+if env_frontend:
+    for url in env_frontend.split(","):
+        clean_url = url.strip().rstrip("/")
+        if clean_url and clean_url not in allowed_origins:
+            allowed_origins.append(clean_url)
+
+CORS(app, resources={r"/*": {"origins": allowed_origins}})
+
+def rate_limit_key():
+    user_id = getattr(g, 'user_id', None)
+    if not user_id:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+            payload = verify_token(token)
+            if payload:
+                user_id = payload.get("user_id")
+    if user_id:
+        return f"user:{user_id}"
+    return get_remote_address()
+
+limiter = Limiter(
+    key_func=rate_limit_key,
+    app=app,
+    default_limits=[],
+    storage_uri="memory://"
+)
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    retry_after = getattr(e, 'retry_after', None)
+    if retry_after:
+        msg = f"Too many requests, try again in {int(retry_after)} seconds."
+    else:
+        msg = "Too many requests, please try again later."
+    return jsonify({
+        'success': False,
+        'error': msg,
+        'retry_after': int(retry_after) if retry_after else 60
+    }), 429
 
 
 CITY_FALLBACK_IMAGES = {
@@ -312,50 +361,69 @@ def load_places():
     conn = sqlite3.connect("database.db")
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, city, category, rating, latitude, longitude, description, image FROM places")
+    cursor.execute("""
+        SELECT id, name, city, category, rating, latitude, longitude, description, image, 
+               image_attribution, image_attribution_link 
+        FROM places
+    """)
     rows = cursor.fetchall()
     places = [dict(row) for row in rows]
     conn.close()
     return places
 
-def get_city_coordinates(city):
-    cache_key = f"geoapify:coords:{city.strip().lower()}"
-    cached = get_cached_response(cache_key)
-    if cached:
-        return cached.get("lat"), cached.get("lon")
 
-    api_key = os.getenv("GEOAPIFY_KEY")
-    if not api_key:
-        return None, None
-    try:
-        response = requests.get(
-            "https://api.geoapify.com/v1/geocode/search",
-            params={"text": city, "limit": 1, "apiKey": api_key},
-            timeout=4
-        )
-        if response.status_code == 200:
-            data = response.json()
-            if data.get("features"):
-                properties = data["features"][0]["properties"]
-                country_code = properties.get("country_code", "").lower()
-                country = properties.get("country", "").lower()
-                
-                # Verify that geocoded result is indeed in India
-                if country_code == "in" or "india" in country:
-                    lon, lat = data["features"][0]["geometry"]["coordinates"]
-                    result = {"lat": lat, "lon": lon}
-                    set_cached_response(cache_key, result, 604800)  # 7 days TTL
-                    return lat, lon
-                else:
-                    result = {"lat": "INTERNATIONAL", "lon": None}
-                    set_cached_response(cache_key, result, 604800)
-                    return "INTERNATIONAL", None
-    except Exception as e:
-        print(f"Geocoding error for '{city}': {e}. Checking fallback cache...")
-        expired_cached = get_cached_response(cache_key, ignore_ttl=True)
-        if expired_cached:
-            return expired_cached.get("lat"), expired_cached.get("lon")
-    return None, None
+def get_unsplash_image(place_name, city=None):
+    """
+    Tier 1: Unsplash API for high-resolution, consistent place photography.
+    Queries matching place_name + city.
+    Caches resolved image URL + photographer attribution in api_cache for 30 days.
+    """
+    place_cleaned = place_name.strip()
+    city_str = city.strip() if city else ""
+    cache_key = f"unsplash:img:{place_cleaned.lower()}:{city_str.lower()}"
+
+    cached = get_cached_response(cache_key)
+    if cached is not None:
+        return cached
+
+    access_key = os.getenv("UNSPLASH_ACCESS_KEY") or os.getenv("UNSPLASH_KEY")
+
+    if access_key:
+        try:
+            query = f"{place_cleaned} {city_str}".strip()
+            url = "https://api.unsplash.com/search/photos"
+            params = {
+                "query": query,
+                "per_page": 1,
+                "orientation": "landscape",
+                "client_id": access_key
+            }
+            resp = requests.get(url, params=params, timeout=3.5)
+            if resp.status_code == 200:
+                data = resp.json()
+                results = data.get("results", [])
+                if results:
+                    photo = results[0]
+                    img_url = photo.get("urls", {}).get("regular") or photo.get("urls", {}).get("small")
+                    user = photo.get("user", {})
+                    photographer = user.get("name") or "Unsplash Contributor"
+                    profile_link = user.get("links", {}).get("html") or "https://unsplash.com"
+
+                    payload = {
+                        "image": img_url,
+                        "attribution_name": photographer,
+                        "attribution_link": profile_link,
+                        "source": "unsplash"
+                    }
+                    set_cached_response(cache_key, payload, 2592000)  # 30 days TTL
+                    return payload
+        except Exception as e:
+            print(f"[Unsplash API Error] {e}")
+            expired_cached = get_cached_response(cache_key, ignore_ttl=True)
+            if expired_cached:
+                return expired_cached
+
+    return None
 
 
 def get_wikipedia_image(place_name, city=None):
@@ -428,6 +496,38 @@ def get_wikipedia_image(place_name, city=None):
                 return expired_cached.get("image")
             
     return None
+
+
+def get_place_image(place_name, city=None):
+    """
+    Multi-Tier Place Image Resolution Pipeline:
+    1. Tier 1: Unsplash API (High-quality photography with photographer attribution)
+    2. Tier 2: Wikipedia OpenSearch API (With strict keyword-matching guards)
+    3. Tier 3: Curated City Fallback Images (CITY_FALLBACK_IMAGES)
+    """
+    # Tier 1: Unsplash
+    unsplash_res = get_unsplash_image(place_name, city)
+    if unsplash_res and unsplash_res.get("image"):
+        return (
+            unsplash_res.get("image"),
+            unsplash_res.get("attribution_name", "Unsplash Contributor"),
+            unsplash_res.get("attribution_link", "https://unsplash.com")
+        )
+
+    # Tier 2: Wikipedia
+    wiki_img = get_wikipedia_image(place_name, city)
+    if wiki_img:
+        wiki_link = f"https://en.wikipedia.org/wiki/{place_name.replace(' ', '_')}"
+        return wiki_img, "Wikipedia", wiki_link
+
+    # Tier 3: Curated City Fallback
+    fallback_img = None
+    if city:
+        fallback_img = CITY_FALLBACK_IMAGES.get(city) or CITY_FALLBACK_IMAGES.get(city.title())
+    if not fallback_img:
+        fallback_img = CITY_FALLBACK_IMAGES.get("Default", "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80")
+
+    return fallback_img, "Unsplash", "https://unsplash.com"
 
 
 
@@ -542,6 +642,7 @@ def home():
 # ---------------- DUFFEL FLIGHTS API ROUTES ----------------
 
 @app.route('/api/flights/search', methods=['GET'])
+@limiter.limit("30 per minute")
 def api_search_flights():
     origin      = request.args.get('from', 'DEL')
     dest_name   = request.args.get('destination', '')
@@ -786,6 +887,7 @@ def api_auth_me():
 
 
 @app.route('/api/trips')
+@limiter.limit("100 per minute")
 @require_auth(optional=False)
 def api_trips():
     """Return all saved trips for the authenticated user as JSON."""
@@ -836,6 +938,7 @@ def api_delete_trip(trip_id):
 
 
 @app.route('/api/bookings', methods=['POST'])
+@limiter.limit("30 per minute")
 @require_auth(optional=False)
 def api_create_booking():
     """Create a stay booking entry in the database for the authenticated user."""
@@ -865,9 +968,93 @@ def api_create_booking():
         """, (ref_id, guest_name, email, destination, hotel_name, room_type, check_in, check_out, guests, total_cost, status, flight_info, g.user_id))
         conn.commit()
         conn.close()
+
+        # Send non-blocking booking confirmation email & SMS
+        try:
+            send_booking_confirmation_email(data)
+            if data.get("phone"):
+                send_booking_confirmation_sms(data.get("phone"), data)
+        except Exception as notif_err:
+            print(f"[Notification Error] Non-blocking notification issue: {notif_err}")
+
         return jsonify({'success': True, 'reference_id': ref_id})
     except Exception as e:
         print("Error creating booking:", e)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ---------------- RAZORPAY PAYMENT ROUTES ----------------
+
+@app.route('/api/payment/create-order', methods=['POST'])
+@require_auth(optional=True)
+def api_create_payment_order():
+    """Create a Razorpay order in Test Mode using server-side calculated Grand Total."""
+    data = request.get_json() or {}
+    amount = float(data.get('amount', 0))
+    currency = data.get('currency', 'INR')
+
+    if amount <= 0:
+        return jsonify({"success": False, "error": "Invalid order amount"}), 400
+
+    order_result = create_razorpay_order(amount, currency=currency)
+    if order_result.get("success"):
+        return jsonify(order_result), 200
+    else:
+        return jsonify(order_result), 500
+
+
+@app.route('/api/payment/verify-and-book', methods=['POST'])
+@require_auth(optional=False)
+def api_verify_payment_and_book():
+    """Verifies Razorpay HMAC signature server-side before writing the booking to database.db."""
+    data = request.get_json() or {}
+    order_id = data.get('razorpay_order_id')
+    payment_id = data.get('razorpay_payment_id')
+    signature = data.get('razorpay_signature')
+    booking_data = data.get('booking') or {}
+
+    # Verify payment signature
+    is_valid = verify_razorpay_signature(order_id, payment_id, signature)
+    if not is_valid:
+        return jsonify({'success': False, 'error': 'Razorpay payment signature verification failed'}), 400
+
+    # Extract booking fields
+    ref_id       = booking_data.get('reference_id') or ("AERO-" + str(int(time.time())))
+    guest_name   = booking_data.get('guest_name')
+    email        = booking_data.get('email')
+    destination  = booking_data.get('destination')
+    hotel_name   = booking_data.get('hotel_name', 'None')
+    room_type    = booking_data.get('room_type', 'Standard Room')
+    check_in     = booking_data.get('check_in')
+    check_out    = booking_data.get('check_out')
+    guests       = int(booking_data.get('guests', 1))
+    total_cost   = float(booking_data.get('total_cost', 0))
+    flight_info  = booking_data.get('flight_info')
+
+    if not guest_name or not email or not destination or not check_in:
+        return jsonify({'success': False, 'error': 'Missing required booking fields'}), 400
+
+    try:
+        conn = sqlite3.connect("database.db")
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO bookings (reference_id, guest_name, email, destination, hotel_name, room_type, check_in, check_out, guests, total_cost, status, flight_info, user_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (ref_id, guest_name, email, destination, hotel_name, room_type, check_in, check_out, guests, total_cost, "Confirmed", flight_info, g.user_id))
+        conn.commit()
+        conn.close()
+
+        # Send non-blocking booking confirmation email & SMS
+        try:
+            send_booking_confirmation_email(booking_data)
+            if booking_data.get("phone"):
+                send_booking_confirmation_sms(booking_data.get("phone"), booking_data)
+        except Exception as notif_err:
+            print(f"[Notification Error] Non-blocking notification issue: {notif_err}")
+
+        return jsonify({'success': True, 'reference_id': ref_id, 'payment_id': payment_id})
+    except Exception as e:
+        print("Error saving verified booking:", e)
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
@@ -1074,6 +1261,7 @@ def get_destination_mapping(query):
 
 # ─── 1. Get hotel LIST for a destination ───────────────────────
 @app.route('/api/hotels', methods=['GET'])
+@limiter.limit("30 per minute")
 def get_hotels():
     destination = request.args.get('destination') or request.args.get('city') or 'Rajasthan'
     limit       = request.args.get('limit', 10)
@@ -1222,6 +1410,7 @@ def get_hotels():
 
 # ─── 2. Get LIVE ROOM PRICES for a specific hotel ──────────────
 @app.route('/api/hotel-rates', methods=['GET'])
+@limiter.limit("30 per minute")
 def get_hotel_rates():
     hotel_key = request.args.get('hotel_key')
     chk_in    = request.args.get('chk_in')   # YYYY-MM-DD
@@ -1331,6 +1520,7 @@ def get_hotel_rates():
 
 # ─── 3. Search hotels by name or city ─────────────────────────
 @app.route('/api/hotels/search', methods=['GET'])
+@limiter.limit("30 per minute")
 def api_search_hotels():
     query = request.args.get('query', '')
     if not query:
@@ -1404,6 +1594,7 @@ def api_delete_expense(expense_id):
 
 
 @app.route('/api/generate-trip', methods=['POST'])
+@limiter.limit("10 per minute")
 @require_auth(optional=True)
 def api_generate_trip():
     """JSON-based itinerary generation endpoint for the Next.js frontend."""
@@ -1437,11 +1628,21 @@ def api_generate_trip():
             existing_names = {row[0].strip().lower() for row in cursor.fetchall()}
             to_insert = [p for p in fetched if p["name"].strip().lower() not in existing_names]
             if to_insert:
+                to_insert_sorted = sorted(to_insert, key=lambda x: x.get("rating", 0), reverse=True)
+                for idx, p in enumerate(to_insert_sorted):
+                    if idx < 12:
+                        img_url, attr_name, attr_link = get_place_image(p['name'], p['city'])
+                        if img_url:
+                            p["image"] = img_url
+                            p["image_attribution"] = attr_name
+                            p["image_attribution_link"] = attr_link
+
                 cursor.executemany("""
-                    INSERT INTO places (name, city, category, rating, latitude, longitude, description, image)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO places (name, city, category, rating, latitude, longitude, description, image, image_attribution, image_attribution_link)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, [(p["name"], p["city"], p["category"], p["rating"],
-                        p["latitude"], p["longitude"], p["description"], p["image"]) for p in to_insert])
+                        p["latitude"], p["longitude"], p["description"], p.get("image"),
+                        p.get("image_attribution"), p.get("image_attribution_link")) for p in to_insert])
                 conn.commit()
             conn.close()
             all_places = load_places()
@@ -1481,7 +1682,8 @@ def api_generate_trip():
         index += places_per_day
 
     total_trip_cost = sum(sum(r.get("cost", 0) for r in d.get("routes", [])) for d in itinerary)
-    weather_info = get_weather_advice(city)
+    weather_info = get_weather_advice(city, days=days)
+    aqi_info = get_air_quality(lat, lon)
 
     # Save generated trip if user is authenticated
     saved_trip_id = None
@@ -1490,9 +1692,9 @@ def api_generate_trip():
             conn = sqlite3.connect("database.db")
             cursor = conn.cursor()
             cursor.execute("""
-                INSERT INTO trips (city, days, budget, pace, vibe, itinerary_json, hotels_json, weather_json, total_trip_cost, budget_remaining, user_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (city, days, budget, pace, vibe, json.dumps(itinerary), json.dumps([]), json.dumps(weather_info), total_trip_cost, budget - total_trip_cost, g.user_id))
+                INSERT INTO trips (city, days, budget, pace, vibe, itinerary_json, hotels_json, weather_json, aqi_json, total_trip_cost, budget_remaining, user_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (city, days, budget, pace, vibe, json.dumps(itinerary), json.dumps([]), json.dumps(weather_info), json.dumps(aqi_info), total_trip_cost, budget - total_trip_cost, g.user_id))
             saved_trip_id = cursor.lastrowid
             conn.commit()
             conn.close()
@@ -1509,7 +1711,8 @@ def api_generate_trip():
         'itinerary': itinerary,
         'total_trip_cost': total_trip_cost,
         'budget_remaining': budget - total_trip_cost,
-        'weather': weather_info
+        'weather': weather_info,
+        'aqi': aqi_info
     })
 
 
@@ -1564,16 +1767,19 @@ def generate():
                     to_insert_sorted = sorted(to_insert, key=lambda x: x.get("rating", 0), reverse=True)
                     for idx, p in enumerate(to_insert_sorted):
                         if idx < 12:
-                            wiki_img = get_wikipedia_image(p['name'], p['city'])
-                            if wiki_img:
-                                p["image"] = wiki_img
+                            img_url, attr_name, attr_link = get_place_image(p['name'], p['city'])
+                            if img_url:
+                                p["image"] = img_url
+                                p["image_attribution"] = attr_name
+                                p["image_attribution_link"] = attr_link
 
                     cursor.executemany("""
-                        INSERT INTO places (name, city, category, rating, latitude, longitude, description, image)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        INSERT INTO places (name, city, category, rating, latitude, longitude, description, image, image_attribution, image_attribution_link)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, [
                         (p["name"], p["city"], p["category"], p["rating"], 
-                         p["latitude"], p["longitude"], p["description"], p["image"])
+                         p["latitude"], p["longitude"], p["description"], p.get("image"),
+                         p.get("image_attribution"), p.get("image_attribution_link"))
                         for p in to_insert
                     ])
                     conn.commit()
@@ -1717,7 +1923,7 @@ def generate():
 
     total_trip_cost += avg_hotel_cost
     budget_remaining = budget - total_trip_cost
-    weather_info = get_weather_advice(city)
+    weather_info = get_weather_advice(city, days=days)
 
     return render_template(
         "result.html",
@@ -1842,15 +2048,87 @@ def search_flights():
     )
 
 
+# ---------------- DOMESTIC TRAIN SEARCH ----------------
+
+@app.route('/api/trains/search', methods=['GET'])
+def api_search_trains():
+    """
+    Search domestic Indian Railways train schedules.
+    Returns trains with explicit unofficial data disclaimers.
+    """
+    dep = request.args.get('dep', 'Delhi').strip()
+    arr = request.args.get('arr', 'Jaipur').strip()
+    date_str = request.args.get('date', '')
+
+    if not dep or not arr:
+        return jsonify({"error": "dep (departure) and arr (arrival) city or station code required"}), 400
+
+    result = search_indian_trains(dep, arr, date_str=date_str)
+    return jsonify(result)
+
+
+# ---------------- PLACE DESCRIPTION REGIONAL TRANSLATION ----------------
+
+@app.route('/api/places/<int:place_id>/translate', methods=['GET'])
+def api_translate_place(place_id):
+    """
+    Translates place description into target regional language ('hi', 'kn', 'ta').
+    Caches translated descriptions permanently in database.db.
+    """
+    lang = request.args.get('lang', 'en').lower().strip()
+    if lang not in SUPPORTED_LANGUAGES:
+        return jsonify({'error': f'Unsupported language code. Supported: {list(SUPPORTED_LANGUAGES.keys())}'}), 400
+
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, description FROM places WHERE id = ?", (place_id,))
+    place = cursor.fetchone()
+    conn.close()
+
+    if not place:
+        return jsonify({'error': 'Place not found'}), 404
+
+    original_description = place['description'] or ""
+    if lang == "en":
+        return jsonify({
+            'success': True,
+            'place_id': place_id,
+            'lang': 'en',
+            'translated_description': original_description
+        })
+
+    translated = translate_place_description(place_id, original_description, lang)
+
+    return jsonify({
+        'success': True,
+        'place_id': place_id,
+        'lang': lang,
+        'lang_name': SUPPORTED_LANGUAGES[lang],
+        'original_description': original_description,
+        'translated_description': translated
+    })
+
+
 # ---------------- WEATHER ADVISOR DATA ----------------
-def get_weather_advice(city):
+def get_weather_advice(city, days=3):
+    try:
+        lat, lon = get_city_coordinates(city)
+        if lat and lon and lat != "INTERNATIONAL":
+            forecast = get_open_meteo_forecast(lat, lon, days=days)
+            if forecast and forecast.get("daily"):
+                return generate_smart_packing_advisory(forecast, city, days=days)
+    except Exception as e:
+        print(f"[Weather Advisor] Error fetching Open-Meteo forecast for '{city}': {e}")
+
     city_lower = city.lower()
     
     default_weather = {
         "temp": "24°C - 30°C",
         "condition": "Pleasant / Variable",
         "description": "Standard weather expected. Dress comfortably.",
-        "packing": ["Comfortable walking shoes", "Refillable water bottle", "Camera / Phone charger", "Light jacket / shrug", "Sunglasses", "Personal toiletries"]
+        "packing": ["Comfortable walking shoes", "Refillable water bottle", "Camera / Phone charger", "Light jacket / shrug", "Sunglasses", "Personal toiletries"],
+        "daily_forecast": []
     }
     
     weather_database = {
@@ -1990,6 +2268,7 @@ def get_weather_advice(city):
     
     for key, data in weather_database.items():
         if key in city_lower:
+            data["daily_forecast"] = []
             return data
             
     return default_weather
@@ -2033,7 +2312,7 @@ def add_expense():
         conn.close()
     return redirect('/expenses')
 
-@app.route('/delete_expense/<int:id>')
+@app.route('/delete_expense/<int:id>', methods=['POST'])
 def delete_expense(id):
     conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
@@ -2042,7 +2321,7 @@ def delete_expense(id):
     conn.close()
     return redirect('/expenses')
 
-@app.route('/clear_expenses')
+@app.route('/clear_expenses', methods=['POST'])
 def clear_expenses():
     conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
@@ -2086,11 +2365,12 @@ def save_trip():
 
 
 @app.route('/saved-trips')
+@require_auth(optional=False)
 def saved_trips():
     conn = sqlite3.connect("database.db")
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    cursor.execute("SELECT id, city, days, budget, pace, vibe, total_trip_cost, budget_remaining, created_at FROM trips ORDER BY created_at DESC")
+    cursor.execute("SELECT id, city, days, budget, pace, vibe, total_trip_cost, budget_remaining, created_at FROM trips WHERE user_id = ? ORDER BY created_at DESC", (g.user_id,))
     rows = cursor.fetchall()
     trips = [dict(row) for row in rows]
     conn.close()
@@ -2098,11 +2378,12 @@ def saved_trips():
 
 
 @app.route('/saved-trips/<int:trip_id>')
+@require_auth(optional=False)
 def load_saved_trip(trip_id):
     conn = sqlite3.connect("database.db")
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM trips WHERE id = ?", (trip_id,))
+    cursor.execute("SELECT * FROM trips WHERE id = ? AND user_id = ?", (trip_id, g.user_id))
     row = cursor.fetchone()
     conn.close()
     
@@ -2131,14 +2412,16 @@ def load_saved_trip(trip_id):
 
 
 @app.route('/delete-trip/<int:trip_id>', methods=['POST'])
+@require_auth(optional=False)
 def delete_trip(trip_id):
     try:
         conn = sqlite3.connect("database.db")
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM trips WHERE id = ?", (trip_id,))
+        cursor.execute("DELETE FROM trips WHERE id = ? AND user_id = ?", (trip_id, g.user_id))
+        deleted = cursor.rowcount > 0
         conn.commit()
         conn.close()
-        return jsonify({"success": True})
+        return jsonify({"success": deleted})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 400
 

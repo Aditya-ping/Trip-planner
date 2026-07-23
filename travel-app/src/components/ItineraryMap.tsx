@@ -4,10 +4,13 @@ import React, { useEffect, useRef, useState } from 'react';
 
 interface Place {
   name: string;
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
   category: string;
   description: string;
+  id?: number;
+  rating?: number;
+  image?: string;
 }
 
 interface DayItinerary {

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Compass, Menu, X, Sun, Moon, Sparkles, Search, Loader2, PlaneTakeoff, CheckCircle, User, LogOut, Lock, Mail } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { API_BASE_URL } from "@/utils/config";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -34,7 +35,7 @@ export default function Navbar() {
     const endpoint = authMode === "login" ? "/api/auth/login" : "/api/auth/register";
 
     try {
-      const res = await fetch(`http://127.0.0.1:5000${endpoint}`, {
+      const res = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: authEmail.trim(), password: authPassword }),
@@ -65,7 +66,7 @@ export default function Navbar() {
     setBookingData(null);
 
     try {
-      const res = await fetch(`http://127.0.0.1:5000/api/bookings/${refId.trim().toUpperCase()}`);
+      const res = await fetch(`${API_BASE_URL}/api/bookings/${refId.trim().toUpperCase()}`);
       const data = await res.json();
       if (data.success) {
         setBookingData(data.booking);
@@ -128,17 +129,17 @@ export default function Navbar() {
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? "bg-bg-main/80 backdrop-blur-md border-b border-border-color py-4 shadow-premium"
-          : "bg-transparent py-6"
+          ? "bg-[#161B2C] border-b border-[#C9A15A]/20 py-4 shadow-document"
+          : "bg-[#161B2C] border-b border-[#C9A15A]/20 py-5"
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
         {/* Brand Logo */}
-        <a href="#" className="flex items-center gap-2 group">
-          <div className="p-2 rounded-xl bg-gradient-to-tr from-accent-primary to-accent-secondary text-white shadow-lg shadow-accent-primary/25 group-hover:scale-105 transition-transform duration-200">
-            <Compass className="w-6 h-6 animate-pulse-slow" />
+        <a href="#" className="flex items-center gap-2.5 group">
+          <div className="p-2 rounded-md bg-[#C9A15A]/10 border border-[#C9A15A]/40 text-[#C9A15A] group-hover:border-[#C9A15A]/80 group-hover:bg-[#C9A15A]/20 transition-colors duration-200">
+            <Compass className="w-5 h-5" />
           </div>
-          <span className="font-heading font-extrabold text-2xl tracking-tight bg-gradient-to-r from-accent-primary via-accent-secondary to-accent-sunset bg-clip-text text-transparent">
+          <span className="font-display font-bold text-2xl tracking-tight text-[#EDEAE2]">
             AeroTravel
           </span>
         </a>
@@ -149,7 +150,7 @@ export default function Navbar() {
             <a
               key={link.name}
               href={link.href}
-              className="text-sm font-medium hover:text-accent-secondary transition-colors duration-200"
+              className="font-sans text-xs font-semibold uppercase tracking-wider text-[#8A94A6] hover:text-[#C9A15A] border-b-2 border-transparent hover:border-[#C9A15A] py-1 transition-all duration-200"
             >
               {link.name}
             </a>
@@ -161,7 +162,7 @@ export default function Navbar() {
           {/* Check Status Button */}
           <button
             onClick={() => setIsStatusOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-border-color hover:bg-card-bg hover:text-accent-secondary text-xs font-semibold transition-all duration-200 cursor-pointer text-fg-main"
+            className="font-sans flex items-center gap-1.5 px-3.5 py-2 rounded-md border border-[#C9A15A]/25 bg-[#161B2C] hover:bg-[#C9A15A]/10 hover:text-[#C9A15A] text-xs font-semibold transition-all duration-200 cursor-pointer text-[#EDEAE2]"
           >
             <Search className="w-3.5 h-3.5" />
             Check Status
@@ -170,25 +171,25 @@ export default function Navbar() {
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="p-2.5 rounded-xl border border-border-color hover:bg-card-bg transition-colors duration-200 cursor-pointer text-fg-main"
+            className="p-2.5 rounded-md border border-[#C9A15A]/25 bg-[#161B2C] hover:bg-[#C9A15A]/10 transition-colors duration-200 cursor-pointer text-[#EDEAE2]"
             aria-label="Toggle Theme"
           >
             {theme === "dark" ? (
               <Sun className="w-5 h-5 text-yellow-400" />
             ) : (
-              <Moon className="w-5 h-5 text-accent-primary" />
+              <Moon className="w-5 h-5 text-[#C9A15A]" />
             )}
           </button>
 
           {/* User Auth Section */}
           {user ? (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border-color bg-card-bg text-fg-main">
-              <User className="w-4 h-4 text-accent-primary" />
+            <div className="font-sans flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#C9A15A]/30 bg-[#161B2C] text-[#EDEAE2]">
+              <User className="w-4 h-4 text-[#C9A15A]" />
               <span className="text-xs font-semibold max-w-[130px] truncate">{user.email}</span>
               <button
                 onClick={logout}
                 title="Log Out"
-                className="p-1 rounded-lg hover:bg-white/10 text-red-400 transition-colors ml-1"
+                className="p-1 rounded hover:bg-white/10 text-red-400 transition-colors ml-1"
               >
                 <LogOut className="w-3.5 h-3.5" />
               </button>
@@ -196,7 +197,7 @@ export default function Navbar() {
           ) : (
             <button
               onClick={() => openAuthModal("login")}
-              className="px-4 py-2 rounded-xl border border-accent-primary/40 hover:bg-accent-primary/10 text-accent-primary font-semibold text-xs transition-all duration-200 cursor-pointer"
+              className="font-sans px-4 py-2 rounded-md border border-[#C9A15A]/40 hover:bg-[#C9A15A]/10 text-[#C9A15A] font-semibold text-xs transition-all duration-200 cursor-pointer"
             >
               Sign In
             </button>
@@ -205,7 +206,7 @@ export default function Navbar() {
           {/* CTA */}
           <a
             href="#ai-planner"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary hover:opacity-95 text-white font-medium text-xs shadow-md shadow-accent-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+            className="font-sans flex items-center gap-2 px-4 py-2 rounded-md bg-[#C9A15A] hover:bg-[#E6C887] text-[#0B0F1A] font-semibold text-xs shadow-md transition-all duration-200"
           >
             <Sparkles className="w-4 h-4" />
             AI Planner
@@ -216,17 +217,17 @@ export default function Navbar() {
         <div className="flex items-center gap-3 md:hidden">
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-xl border border-border-color transition-colors"
+            className="p-2 rounded-md border border-[#C9A15A]/25 transition-colors"
           >
             {theme === "dark" ? (
               <Sun className="w-4 h-4 text-yellow-400" />
             ) : (
-              <Moon className="w-4 h-4 text-accent-primary" />
+              <Moon className="w-4 h-4 text-[#C9A15A]" />
             )}
           </button>
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="p-2 rounded-xl border border-border-color text-fg-main hover:bg-card-bg transition-colors"
+            className="p-2 rounded-md border border-[#C9A15A]/25 text-[#EDEAE2] hover:bg-[#C9A15A]/10 transition-colors"
           >
             {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -235,7 +236,7 @@ export default function Navbar() {
 
       {/* Mobile Drawer */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 glassmorphism border-b border-border-color py-6 px-6 flex flex-col gap-4 md:hidden shadow-lg animate-in fade-in slide-in-from-top-5 duration-200">
+        <div className="absolute top-full left-0 right-0 bg-[#161B2C] border-b border-[#C9A15A]/20 py-6 px-6 flex flex-col gap-4 md:hidden shadow-lg animate-in fade-in slide-in-from-top-5 duration-200">
           {navLinks.map((link) => (
             <a
               key={link.name}
@@ -280,10 +281,10 @@ export default function Navbar() {
             />
 
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              transition={{ type: "spring", duration: 0.4 }}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 15 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
               className="relative w-full max-w-md overflow-hidden rounded-3xl glassmorphism border border-white/10 shadow-2xl z-10 bg-card-bg backdrop-blur-xl p-6 sm:p-8 text-fg-main"
             >
               <div className="flex justify-between items-center mb-6">
@@ -422,7 +423,7 @@ export default function Navbar() {
 
                           window.location.href = `/checkout?packageId=custom&city=${encodeURIComponent(city)}&priceNum=${bookingData.total_cost}&days=${nights + 1} Days / ${nights} Nights&image=https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80&includeFlights=true`;
                         }}
-                        className="flex items-center justify-center gap-1 w-full py-2 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary hover:opacity-95 text-white text-[10px] font-bold shadow-md hover:scale-[1.01] transition-all cursor-pointer"
+                        className="flex items-center justify-center gap-1 w-full py-2 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary hover:opacity-95 text-white text-[10px] font-bold shadow-md transition-colors cursor-pointer"
                       >
                         <PlaneTakeoff className="w-3 h-3" />
                         Book Flights & Customize Now
@@ -551,7 +552,7 @@ export default function Navbar() {
                 <button
                   type="submit"
                   disabled={authLoading}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary hover:opacity-95 text-white font-bold text-xs shadow-lg shadow-accent-primary/20 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary hover:opacity-95 text-white font-bold text-xs shadow-lg shadow-accent-primary/20 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {authLoading ? (
                     <>
