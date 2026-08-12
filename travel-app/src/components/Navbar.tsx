@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Compass, Menu, X, Sun, Moon, Sparkles, Search, Loader2, PlaneTakeoff, CheckCircle, User, LogOut, Lock, Mail } from "lucide-react";
+import { Compass, Menu, X, Sun, Moon, Sparkles, Search, Loader2, PlaneTakeoff, CheckCircle, User, LogOut, Lock, Mail, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { API_BASE_URL } from "@/utils/config";
 
@@ -183,16 +183,27 @@ export default function Navbar() {
 
           {/* User Auth Section */}
           {user ? (
-            <div className="font-sans flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#C9A15A]/30 bg-[#161B2C] text-[#EDEAE2]">
-              <User className="w-4 h-4 text-[#C9A15A]" />
-              <span className="text-xs font-semibold max-w-[130px] truncate">{user.email}</span>
-              <button
-                onClick={logout}
-                title="Log Out"
-                className="p-1 rounded hover:bg-white/10 text-red-400 transition-colors ml-1"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
+            <div className="flex items-center gap-2">
+              {user.is_admin && (
+                <a
+                  href="/admin/events"
+                  className="font-sans flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 text-xs font-semibold transition-all"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Admin Queue</span>
+                </a>
+              )}
+              <div className="font-sans flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#C9A15A]/30 bg-[#161B2C] text-[#EDEAE2]">
+                <User className="w-4 h-4 text-[#C9A15A]" />
+                <span className="text-xs font-semibold max-w-[130px] truncate">{user.email}</span>
+                <button
+                  onClick={logout}
+                  title="Log Out"
+                  className="p-1 rounded hover:bg-white/10 text-red-400 transition-colors ml-1"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           ) : (
             <button

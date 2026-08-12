@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, ArrowRight, X, Calendar, Users, ShieldCheck, CheckCircle, HelpCircle, ArrowLeft, Loader2, ExternalLink, PlaneTakeoff, ChevronLeft, ChevronRight } from "lucide-react";
 import { API_BASE_URL } from "@/utils/config";
+import { LocalEvents } from "./LocalEvents";
+import { TravelBuddyActivities } from "./TravelBuddyActivities";
 
 interface ItineraryDay {
   day: number;
@@ -973,6 +975,12 @@ export default function PopularDestinations() {
                         </ul>
                       </div>
                     )}
+
+                    {/* Local Events Section */}
+                    <LocalEvents city={selectedDest.name} />
+
+                    {/* Traveler Activity Invites Section */}
+                    <TravelBuddyActivities city={selectedDest.name} />
 
                     {/* Pricing Display */}
                     <div className="flex justify-between items-center bg-fg-main/5 p-4 rounded-2xl border border-border-color mt-2">

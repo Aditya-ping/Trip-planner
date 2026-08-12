@@ -48,6 +48,10 @@ from utils.notifications import send_booking_confirmation_email, send_booking_co
 from utils.aqi import get_air_quality
 from utils.trains import search_indian_trains
 from utils.translator import translate_place_description, SUPPORTED_LANGUAGES
+from utils.refiner import refine_itinerary
+from utils.events import fetch_live_events
+from utils.spam_filter import check_spam_keywords
+from utils.trust_signal import calculate_user_trust_signal
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -77,9 +81,32 @@ def verify_token(token):
     except Exception:
         return None
 
-def require_auth(optional=False):
-    def decorator(f):
+def require_auth(f=None, optional=False):
+    if f is not None and callable(f):
         @wraps(f)
+        def decorated_function(*args, **kwargs):
+            auth_header = request.headers.get("Authorization")
+            token = None
+            if auth_header and auth_header.startswith("Bearer "):
+                token = auth_header.split(" ")[1]
+            
+            g.user_id = None
+            g.user_email = None
+
+            if token:
+                payload = verify_token(token)
+                if payload:
+                    g.user_id = payload.get("user_id")
+                    g.user_email = payload.get("email")
+
+            if not g.user_id:
+                return jsonify({"success": False, "error": "Unauthorized. Please log in."}), 401
+                
+            return f(*args, **kwargs)
+        return decorated_function
+
+    def decorator(func):
+        @wraps(func)
         def decorated_function(*args, **kwargs):
             auth_header = request.headers.get("Authorization")
             token = None
@@ -98,8 +125,45 @@ def require_auth(optional=False):
             if not optional and not g.user_id:
                 return jsonify({"success": False, "error": "Unauthorized. Please log in."}), 401
                 
-            return f(*args, **kwargs)
+            return func(*args, **kwargs)
         return decorated_function
+    return decorator
+
+def require_admin(f=None):
+    def decorator(func):
+        @wraps(func)
+        def decorated_function(*args, **kwargs):
+            auth_header = request.headers.get("Authorization")
+            token = None
+            if auth_header and auth_header.startswith("Bearer "):
+                token = auth_header.split(" ")[1]
+            
+            g.user_id = None
+            g.user_email = None
+
+            if token:
+                payload = verify_token(token)
+                if payload:
+                    g.user_id = payload.get("user_id")
+                    g.user_email = payload.get("email")
+
+            if not g.user_id:
+                return jsonify({"success": False, "error": "Unauthorized. Please log in."}), 401
+            
+            conn = sqlite3.connect("database.db")
+            cursor = conn.cursor()
+            cursor.execute("SELECT is_admin FROM users WHERE id = ?", (g.user_id,))
+            row = cursor.fetchone()
+            conn.close()
+
+            if not row or not row[0]:
+                return jsonify({"success": False, "error": "Forbidden. Admin access required."}), 403
+
+            return func(*args, **kwargs)
+        return decorated_function
+
+    if f is not None and callable(f):
+        return decorator(f)
     return decorator
 
 # ── All 23 cities with nearest airport IATA codes ────────────
@@ -566,6 +630,88 @@ def get_place_image(place_name, city=None):
 
 
 
+def get_city_coordinates(city):
+    """
+    Geocodes city name into (latitude, longitude) using Geoapify / OpenStreetMap.
+    Validates that city is in India ('IN'). Returns ('INTERNATIONAL', None) if outside India.
+    Caches result for 30 days.
+    """
+    if not city:
+        return 26.9124, 75.7873
+
+    city_clean = city.strip().lower()
+    cache_key = f"geo:coords:{city_clean}"
+    cached = get_cached_response(cache_key)
+    if cached is not None:
+        return cached.get("lat"), cached.get("lon")
+
+    # Hardcoded coordinates fallback for popular Indian cities
+    HARDCODED_COORDS = {
+        "jaipur": (26.9124, 75.7873),
+        "delhi": (28.6139, 77.2090),
+        "new delhi": (28.6139, 77.2090),
+        "mumbai": (19.0760, 72.8777),
+        "bombay": (19.0760, 72.8777),
+        "bangalore": (12.9716, 77.5946),
+        "bengaluru": (12.9716, 77.5946),
+        "kochi": (9.9312, 76.2673),
+        "cochin": (9.9312, 76.2673),
+        "goa": (15.2993, 74.1240),
+        "leh": (34.1526, 77.5771),
+        "leh ladakh": (34.1526, 77.5771),
+        "agra": (27.1767, 78.0081),
+        "varanasi": (25.3176, 82.9739),
+        "amritsar": (31.6340, 74.8723),
+        "shimla": (31.1048, 77.1734),
+        "manali": (32.2432, 77.1892),
+        "udaipur": (24.5854, 73.7125),
+        "jodhpur": (26.2389, 73.0243),
+        "kolkata": (22.5726, 88.3639),
+        "chennai": (13.0827, 80.2707),
+        "hyderabad": (17.3850, 78.4867),
+        "munnar": (10.0889, 77.0595),
+        "alleppey": (9.4981, 76.3388),
+        "gangtok": (27.3389, 88.6065),
+        "rishikesh": (30.0869, 78.2676),
+        "pondicherry": (11.9416, 79.8083),
+        "kodaikanal": (10.2381, 77.4892),
+        "ooty": (11.4102, 76.6950),
+        "mysore": (12.2958, 76.6394)
+    }
+
+    if city_clean in HARDCODED_COORDS:
+        lat, lon = HARDCODED_COORDS[city_clean]
+        set_cached_response(cache_key, {"lat": lat, "lon": lon}, 2592000)
+        return lat, lon
+
+    api_key = os.getenv("GEOAPIFY_KEY")
+    if api_key:
+        try:
+            url = "https://api.geoapify.com/1/geocode/search"
+            params = {"text": city, "apiKey": api_key, "limit": 1}
+            logger.info(f"[Geoapify Geocoding] Geocoding city='{city}'")
+            resp = requests.get(url, params=params, timeout=4)
+            if resp.status_code == 200:
+                data = resp.json()
+                features = data.get("features", [])
+                if features:
+                    props = features[0].get("properties", {})
+                    country_code = props.get("country_code", "").lower()
+                    if country_code and country_code != "in":
+                        return "INTERNATIONAL", None
+                    geom = features[0].get("geometry", {})
+                    coords = geom.get("coordinates", [])
+                    if len(coords) >= 2:
+                        lon, lat = coords[0], coords[1]
+                        set_cached_response(cache_key, {"lat": lat, "lon": lon}, 2592000)
+                        return lat, lon
+        except Exception as e:
+            logger.error(f"[Geocoding Error] Geoapify search failed for '{city}': {e}")
+
+    # Fallback to Jaipur coords if geocoding fails
+    return 26.9124, 75.7873
+
+
 def fetch_places_from_api(city, lat, lon):
     cache_key = f"geoapify:places:{city.strip().lower()}"
     cached = get_cached_response(cache_key)
@@ -981,7 +1127,7 @@ def api_delete_trip(trip_id):
 
 @app.route('/api/bookings', methods=['POST'])
 @limiter.limit("30 per minute")
-@require_auth(optional=False)
+@require_auth(optional=True)
 def api_create_booking():
     """Create a stay booking entry in the database for the authenticated user."""
     try:
@@ -1778,6 +1924,61 @@ def api_generate_trip():
     })
 
 
+@app.route('/api/refine-trip', methods=['POST'])
+@limiter.limit("15 per minute")
+@require_auth(optional=True)
+def api_refine_trip():
+    """JSON-based conversational itinerary refinement endpoint."""
+    data = request.get_json() or {}
+    city = data.get('city', 'India')
+    days = int(data.get('days', 3))
+    budget = int(data.get('budget', 50000))
+    pace = data.get('pace', 'moderate')
+    vibe = data.get('vibe', 'mixed')
+    instruction = data.get('instruction', '')
+    itinerary = data.get('itinerary', [])
+
+    if not instruction:
+        return jsonify({'error': 'Refinement instruction is required.'}), 400
+    if not itinerary:
+        return jsonify({'error': 'Current itinerary context is required.'}), 400
+
+    logger.info(f"[Trip Refinement] Request received: city='{city}', instruction='{instruction}'")
+
+    res = refine_itinerary(itinerary, instruction, city=city)
+
+    weather_info = get_weather_advice(city, days=days)
+    lat, lon = get_city_coordinates(city)
+    aqi_info = get_air_quality(lat, lon)
+
+    res['pace'] = pace
+    res['vibe'] = vibe
+    res['budget_remaining'] = budget - res.get('total_trip_cost', 0)
+    res['weather'] = weather_info
+    res['aqi'] = aqi_info
+
+    # Save refined trip if user is authenticated
+    saved_trip_id = None
+    if getattr(g, 'user_id', None):
+        try:
+            conn = sqlite3.connect("database.db")
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO trips (city, days, budget, pace, vibe, itinerary_json, hotels_json, weather_json, aqi_json, total_trip_cost, budget_remaining, user_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (city, days, budget, pace, vibe, json.dumps(res['itinerary']), json.dumps([]), json.dumps(weather_info), json.dumps(aqi_info), res['total_trip_cost'], res['budget_remaining'], g.user_id))
+            saved_trip_id = cursor.lastrowid
+            conn.commit()
+            conn.close()
+            logger.info(f"[Trip Refinement] Saved refined trip for user_id={g.user_id} with trip_id={saved_trip_id}")
+        except Exception as err:
+            logger.error(f"[Trip Refinement Error] Failed to save refined trip: {err}")
+
+    res['trip_id'] = saved_trip_id
+    logger.info(f"[Trip Refinement Success] Refined trip for city='{city}' (Modified days: {res.get('modified_days')})")
+    return jsonify(res)
+
+
 # ---------------- ROUTE OPTIMIZATION ----------------
 # Implemented with Nearest-Neighbor + 2-Opt local search pass in utils.distance
 
@@ -2537,6 +2738,709 @@ def get_alternative_places():
     places = [dict(row) for row in rows]
     conn.close()
     return jsonify({"success": True, "places": places})
+
+
+# ---------------- EVENTS API ----------------
+
+@app.route('/api/events', methods=['GET'])
+def get_events():
+    """
+    Returns approved events for a specified city (or all cities if not specified).
+    Merges approved events from database.db with live API events.
+    Excludes events where end_date has already passed.
+    Sorted by start_date ascending.
+    """
+    city = request.args.get('city', '').strip()
+    current_date = datetime.now().strftime("%Y-%m-%d")
+
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    if city:
+        cursor.execute("""
+            SELECT id, city, title, description, category, start_date, end_date,
+                   location_name, latitude, longitude, source, submitted_by, status, created_at
+            FROM events
+            WHERE LOWER(city) = LOWER(?) AND status = 'approved' AND date(end_date) >= date(?)
+            ORDER BY date(start_date) ASC
+        """, (city, current_date))
+    else:
+        cursor.execute("""
+            SELECT id, city, title, description, category, start_date, end_date,
+                   location_name, latitude, longitude, source, submitted_by, status, created_at
+            FROM events
+            WHERE status = 'approved' AND date(end_date) >= date(?)
+            ORDER BY date(start_date) ASC
+        """, (current_date,))
+
+    rows = cursor.fetchall()
+    db_events = [dict(row) for row in rows]
+    conn.close()
+
+    # Fetch live API events if city is provided
+    api_events = []
+    if city:
+        try:
+            api_events = fetch_live_events(city)
+        except Exception as e:
+            logger.error(f"Error fetching live API events: {e}")
+
+    # Merge and deduplicate by title (case-insensitive)
+    existing_titles = {e['title'].strip().lower() for e in db_events}
+    merged_events = list(db_events)
+
+    for ev in api_events:
+        if ev['title'].strip().lower() not in existing_titles:
+            if ev.get('end_date', '9999-12-31') >= current_date:
+                merged_events.append(ev)
+                existing_titles.add(ev['title'].strip().lower())
+
+    merged_events.sort(key=lambda x: str(x.get('start_date', '')))
+
+    return jsonify({"success": True, "events": merged_events})
+
+
+@app.route('/api/events', methods=['POST'])
+@require_auth
+def create_event():
+    """
+    Submits a new user-created local event.
+    Requires authentication.
+    Sets status to 'pending' by default.
+    """
+    data = request.get_json() or {}
+    city = data.get('city', '').strip()
+    title = data.get('title', '').strip()
+    description = data.get('description', '').strip()
+    category = data.get('category', '').strip().lower()
+    start_date = data.get('start_date', '').strip()
+    end_date = data.get('end_date', '').strip()
+    location_name = data.get('location_name', '').strip()
+    latitude = data.get('latitude')
+    longitude = data.get('longitude')
+
+    if not city or not title or not category or not start_date or not end_date:
+        return jsonify({
+            "success": False,
+            "error": "Missing required fields: city, title, category, start_date, and end_date are required."
+        }), 400
+
+    allowed_categories = {'fair', 'festival', 'concert', 'market', 'other'}
+    if category not in allowed_categories:
+        return jsonify({
+            "success": False,
+            "error": f"Invalid category '{category}'. Must be one of: fair, festival, concert, market, other."
+        }), 400
+
+    try:
+        conn = sqlite3.connect("database.db")
+        cursor = conn.cursor()
+
+        # Enforce rate limit: max 5 pending submissions per user
+        cursor.execute("SELECT COUNT(*) FROM events WHERE submitted_by = ? AND status = 'pending'", (g.user_id,))
+        pending_count = cursor.fetchone()[0]
+        if pending_count >= 5:
+            conn.close()
+            return jsonify({
+                "success": False,
+                "error": "Maximum pending event submissions reached (5). Please wait until existing submissions are reviewed."
+            }), 429
+
+        # Profanity & spam keyword filter
+        is_flagged, flag_reason = check_spam_keywords(title=title, description=description, location_name=location_name)
+        flag_val = 1 if is_flagged else 0
+
+        cursor.execute("""
+            INSERT INTO events (
+                city, title, description, category, start_date, end_date,
+                location_name, latitude, longitude, source, submitted_by, status,
+                is_flagged, flag_reason
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'user_submitted', ?, 'pending', ?, ?)
+        """, (
+            city, title, description, category, start_date, end_date,
+            location_name, latitude, longitude, g.user_id, flag_val, flag_reason
+        ))
+        conn.commit()
+        event_id = cursor.lastrowid
+        conn.close()
+
+        msg = "Event submitted successfully and is pending approval."
+        if is_flagged:
+            msg += " (Flagged for priority admin review due to potential keywords)."
+
+        return jsonify({
+            "success": True,
+            "message": msg,
+            "event": {
+                "id": event_id,
+                "city": city,
+                "title": title,
+                "description": description,
+                "category": category,
+                "start_date": start_date,
+                "end_date": end_date,
+                "location_name": location_name,
+                "source": "user_submitted",
+                "submitted_by": g.user_id,
+                "status": "pending",
+                "is_flagged": is_flagged,
+                "flag_reason": flag_reason
+            }
+        }), 201
+
+    except Exception as e:
+        logger.error(f"Failed to submit event: {e}")
+        return jsonify({"success": False, "error": f"Database error: {str(e)}"}), 500
+
+
+# ---------------- ADMIN EVENTS MODERATION API ----------------
+
+@app.route('/api/admin/events', methods=['GET'])
+@require_admin
+def admin_get_events():
+    """
+    Lists all pending events for administrative moderation.
+    Returns events sorted by priority flag (is_flagged DESC) and timestamp DESC.
+    """
+    try:
+        conn = sqlite3.connect("database.db")
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT e.id, e.city, e.title, e.description, e.category, e.start_date, e.end_date,
+                   e.location_name, e.latitude, e.longitude, e.source, e.submitted_by, e.status,
+                   e.created_at, e.is_flagged, e.flag_reason, u.email as submitter_email
+            FROM events e
+            LEFT JOIN users u ON e.submitted_by = u.id
+            WHERE e.status = 'pending'
+            ORDER BY e.is_flagged DESC, date(e.created_at) DESC, e.id DESC
+        """)
+        rows = cursor.fetchall()
+        pending_events = [dict(row) for row in rows]
+        conn.close()
+
+        return jsonify({"success": True, "events": pending_events})
+    except Exception as e:
+        logger.error(f"Error fetching admin pending events: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/admin/events/<int:event_id>/approve', methods=['POST'])
+@require_admin
+def admin_approve_event(event_id):
+    """
+    Approves a pending event, making it visible on the public /api/events endpoint.
+    """
+    try:
+        conn = sqlite3.connect("database.db")
+        cursor = conn.cursor()
+        cursor.execute("UPDATE events SET status = 'approved' WHERE id = ?", (event_id,))
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({"success": False, "error": "Event not found"}), 404
+        conn.commit()
+        conn.close()
+
+        return jsonify({
+            "success": True,
+            "message": f"Event #{event_id} has been approved and is now public."
+        })
+    except Exception as e:
+        logger.error(f"Error approving event #{event_id}: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/admin/events/<int:event_id>/reject', methods=['POST'])
+@require_admin
+def admin_reject_event(event_id):
+    """
+    Rejects a pending event.
+    """
+    try:
+        conn = sqlite3.connect("database.db")
+        cursor = conn.cursor()
+        cursor.execute("UPDATE events SET status = 'rejected' WHERE id = ?", (event_id,))
+        if cursor.rowcount == 0:
+            conn.close()
+            return jsonify({"success": False, "error": "Event not found"}), 404
+        conn.commit()
+        conn.close()
+
+        return jsonify({
+            "success": True,
+            "message": f"Event #{event_id} has been rejected."
+        })
+    except Exception as e:
+        logger.error(f"Error rejecting event #{event_id}: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ---------------- ACTIVITY INVITES API ----------------
+
+@app.route('/api/activities', methods=['POST'])
+@require_auth
+def create_activity():
+    """
+    Creates a new activity invite.
+    Requires authentication. Sets host_user_id = g.user_id, status = 'open'.
+    """
+    data = request.get_json() or {}
+    title = data.get('title', '').strip()
+    description = data.get('description', '').strip()
+    activity_type = data.get('activity_type', '').strip().lower()
+    city = data.get('city', '').strip()
+    location_name = data.get('location_name', '').strip()
+    latitude = data.get('latitude')
+    longitude = data.get('longitude')
+    scheduled_date = data.get('scheduled_date', '').strip()
+    scheduled_time = data.get('scheduled_time', '').strip()
+    max_participants = data.get('max_participants')
+
+    if not title or not activity_type or not city or not scheduled_date:
+        return jsonify({
+            "success": False,
+            "error": "Missing required fields: title, activity_type, city, and scheduled_date are required."
+        }), 400
+
+    allowed_types = {'adventure', 'food', 'sightseeing', 'other'}
+    if activity_type not in allowed_types:
+        return jsonify({
+            "success": False,
+            "error": f"Invalid activity_type '{activity_type}'. Must be one of: adventure, food, sightseeing, other."
+        }), 400
+
+    try:
+        max_p = int(max_participants) if max_participants and str(max_participants).isdigit() else None
+    except ValueError:
+        max_p = None
+
+    try:
+        conn = sqlite3.connect("database.db")
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO activity_invites (
+                host_user_id, title, description, activity_type, city,
+                location_name, latitude, longitude, scheduled_date, scheduled_time,
+                max_participants, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open')
+        """, (
+            g.user_id, title, description, activity_type, city,
+            location_name, latitude, longitude, scheduled_date, scheduled_time,
+            max_p
+        ))
+        conn.commit()
+        invite_id = cursor.lastrowid
+        conn.close()
+
+        return jsonify({
+            "success": True,
+            "message": "Activity invite created successfully!",
+            "activity": {
+                "id": invite_id,
+                "host_user_id": g.user_id,
+                "title": title,
+                "description": description,
+                "activity_type": activity_type,
+                "city": city,
+                "location_name": location_name,
+                "scheduled_date": scheduled_date,
+                "scheduled_time": scheduled_time,
+                "max_participants": max_p,
+                "status": "open"
+            }
+        }), 201
+    except Exception as e:
+        logger.error(f"Error creating activity invite: {e}")
+        return jsonify({"success": False, "error": f"Database error: {str(e)}"}), 500
+
+
+# ---------------- SAFETY REPORTS & BLOCKS API ----------------
+
+@app.route('/api/reports', methods=['POST'])
+@require_auth
+def create_report():
+    """
+    Files a safety/abuse report against a user or activity invite.
+    Requires authentication. Sets status = 'open'.
+    """
+    data = request.get_json() or {}
+    reported_user_id = data.get('reported_user_id')
+    reported_invite_id = data.get('reported_invite_id')
+    reason = data.get('reason', '').strip()
+    description = data.get('description', '').strip()
+
+    if not reported_user_id or not reason:
+        return jsonify({
+            "success": False,
+            "error": "reported_user_id and reason are required."
+        }), 400
+
+    try:
+        rep_user = int(reported_user_id)
+        rep_inv = int(reported_invite_id) if reported_invite_id and str(reported_invite_id).isdigit() else None
+    except ValueError:
+        return jsonify({"success": False, "error": "Invalid user or invite ID."}), 400
+
+    if rep_user == g.user_id:
+        return jsonify({"success": False, "error": "You cannot report yourself."}), 400
+
+    try:
+        conn = sqlite3.connect("database.db")
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO reports (reporter_user_id, reported_user_id, reported_invite_id, reason, description, status)
+            VALUES (?, ?, ?, ?, ?, 'open')
+        """, (g.user_id, rep_user, rep_inv, reason, description))
+        conn.commit()
+        report_id = cursor.lastrowid
+        conn.close()
+
+        return jsonify({
+            "success": True,
+            "message": "Safety report submitted. Our moderation team will investigate immediately.",
+            "report_id": report_id
+        }), 201
+    except Exception as e:
+        logger.error(f"Error filing report: {e}")
+        return jsonify({"success": False, "error": f"Database error: {str(e)}"}), 500
+
+
+@app.route('/api/blocks', methods=['POST'])
+@require_auth
+def block_user():
+    """
+    Blocks a specified user.
+    Prevents blocked user's invites from appearing and blocks join requests.
+    """
+    data = request.get_json() or {}
+    blocked_user_id = data.get('blocked_user_id')
+
+    if not blocked_user_id:
+        return jsonify({"success": False, "error": "blocked_user_id is required."}), 400
+
+    try:
+        target_id = int(blocked_user_id)
+    except ValueError:
+        return jsonify({"success": False, "error": "Invalid user ID."}), 400
+
+    if target_id == g.user_id:
+        return jsonify({"success": False, "error": "You cannot block yourself."}), 400
+
+    try:
+        conn = sqlite3.connect("database.db")
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT OR IGNORE INTO blocked_users (blocker_user_id, blocked_user_id)
+            VALUES (?, ?)
+        """, (g.user_id, target_id))
+        conn.commit()
+        conn.close()
+
+        return jsonify({
+            "success": True,
+            "message": f"User #{target_id} has been blocked."
+        }), 200
+    except Exception as e:
+        logger.error(f"Error blocking user: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/activities', methods=['GET'])
+@require_auth(optional=True)
+def get_activities():
+    """
+    Returns open activity invites for a specified city (or all if not specified).
+    Filters out invites where host is blocked by current user or vice-versa.
+    Masks exact location_name and host contact info for non-accepted participants.
+    """
+    city = request.args.get('city', '').strip()
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    current_user_id = getattr(g, 'user_id', None)
+
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    query = """
+        SELECT a.id, a.host_user_id, a.title, a.description, a.activity_type, a.city,
+               a.location_name, a.latitude, a.longitude, a.scheduled_date, a.scheduled_time,
+               a.max_participants, a.status, a.created_at, u.email as host_email
+        FROM activity_invites a
+        JOIN users u ON a.host_user_id = u.id
+        WHERE a.status IN ('open', 'full') AND date(a.scheduled_date) >= date(?)
+    """
+    params = [current_date]
+
+    if city:
+        query += " AND LOWER(a.city) = LOWER(?)"
+        params.append(city)
+
+    # Query-level filtering for blocked users
+    if current_user_id:
+        query += """
+            AND a.host_user_id NOT IN (SELECT blocked_user_id FROM blocked_users WHERE blocker_user_id = ?)
+            AND a.host_user_id NOT IN (SELECT blocker_user_id FROM blocked_users WHERE blocked_user_id = ?)
+        """
+        params.extend([current_user_id, current_user_id])
+
+    query += " ORDER BY date(a.scheduled_date) ASC, a.id DESC"
+
+    cursor.execute(query, tuple(params))
+    rows = cursor.fetchall()
+
+    activities = []
+
+    for r in rows:
+        act = dict(r)
+        act_id = act['id']
+
+        # Get counts
+        cursor.execute("SELECT COUNT(*) FROM activity_participants WHERE invite_id = ? AND status = 'accepted'", (act_id,))
+        accepted_count = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM activity_participants WHERE invite_id = ? AND status = 'requested'", (act_id,))
+        requested_count = cursor.fetchone()[0]
+
+        act['accepted_participants_count'] = accepted_count
+        act['pending_requests_count'] = requested_count
+        is_host = (current_user_id == act['host_user_id']) if current_user_id else False
+        act['is_host'] = is_host
+
+        # Get current user's join status
+        user_status = "none"
+        if current_user_id:
+            cursor.execute("SELECT status FROM activity_participants WHERE invite_id = ? AND user_id = ?", (act_id, current_user_id))
+            p_row = cursor.fetchone()
+            if p_row:
+                user_status = p_row[0]
+
+        act['user_join_status'] = user_status
+
+        # Attach host trust signal
+        act['host_trust_signal'] = calculate_user_trust_signal(act['host_user_id'])
+
+        # Location Privacy Rule: Mask meeting location and host email if not host and not accepted participant
+        if not is_host and user_status != 'accepted':
+            act['location_name'] = "🔒 Visible to accepted participants only"
+            if act.get('host_email'):
+                act['host_email'] = f"Traveler #{act['host_user_id']}"
+
+        activities.append(act)
+
+    conn.close()
+    return jsonify({"success": True, "activities": activities})
+
+
+@app.route('/api/activities/my-hosted', methods=['GET'])
+@require_auth
+def get_my_hosted_activities():
+    """
+    Returns all activities hosted by the current authenticated user along with participant join requests.
+    """
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id, host_user_id, title, description, activity_type, city, location_name,
+               scheduled_date, scheduled_time, max_participants, status, created_at
+        FROM activity_invites
+        WHERE host_user_id = ? AND status != 'cancelled'
+        ORDER BY date(scheduled_date) DESC, id DESC
+    """, (g.user_id,))
+    rows = cursor.fetchall()
+
+    hosted_activities = []
+    for r in rows:
+        act = dict(r)
+        act_id = act['id']
+
+        # Fetch requests/participants with submitter email
+        cursor.execute("""
+            SELECT p.id as participant_id, p.user_id, p.status, p.joined_at, u.email as user_email
+            FROM activity_participants p
+            JOIN users u ON p.user_id = u.id
+            WHERE p.invite_id = ?
+            ORDER BY p.joined_at DESC
+        """, (act_id,))
+        p_rows = cursor.fetchall()
+
+        participants_list = []
+        for pr in p_rows:
+            p_dict = dict(pr)
+            p_dict['trust_signal'] = calculate_user_trust_signal(p_dict['user_id'])
+            participants_list.append(p_dict)
+
+        act['participants'] = participants_list
+        hosted_activities.append(act)
+
+    conn.close()
+    return jsonify({"success": True, "activities": hosted_activities})
+
+
+@app.route('/api/activities/<int:activity_id>/join', methods=['POST'])
+@require_auth
+def join_activity(activity_id):
+    """
+    Requests to join an activity invite.
+    Requires authentication. Strictly sets participant status to 'requested'.
+    Enforces block checks between applicant and host.
+    """
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM activity_invites WHERE id = ?", (activity_id,))
+    invite = cursor.fetchone()
+
+    if not invite:
+        conn.close()
+        return jsonify({"success": False, "error": "Activity invite not found."}), 404
+
+    if invite['status'] != 'open':
+        conn.close()
+        return jsonify({"success": False, "error": f"Activity is currently '{invite['status']}' and cannot accept new join requests."}), 400
+
+    if invite['host_user_id'] == g.user_id:
+        conn.close()
+        return jsonify({"success": False, "error": "You are the host of this activity!"}), 400
+
+    # Block Check: Verify neither user has blocked the other
+    cursor.execute("""
+        SELECT COUNT(*) FROM blocked_users
+        WHERE (blocker_user_id = ? AND blocked_user_id = ?)
+           OR (blocker_user_id = ? AND blocked_user_id = ?)
+    """, (g.user_id, invite['host_user_id'], invite['host_user_id'], g.user_id))
+    if cursor.fetchone()[0] > 0:
+        conn.close()
+        return jsonify({"success": False, "error": "Cannot request to join this activity due to user block settings."}), 403
+
+    # Check if already requested or joined
+    cursor.execute("SELECT status FROM activity_participants WHERE invite_id = ? AND user_id = ?", (activity_id, g.user_id))
+    existing = cursor.fetchone()
+
+    if existing:
+        current_st = existing[0]
+        if current_st in ('requested', 'accepted'):
+            conn.close()
+            return jsonify({
+                "success": False,
+                "error": f"You have already {current_st} for this activity."
+            }), 400
+        else:
+            # Re-request if previously declined
+            cursor.execute("UPDATE activity_participants SET status = 'requested', joined_at = CURRENT_TIMESTAMP WHERE invite_id = ? AND user_id = ?", (activity_id, g.user_id))
+    else:
+        cursor.execute("""
+            INSERT INTO activity_participants (invite_id, user_id, status)
+            VALUES (?, ?, 'requested')
+        """, (activity_id, g.user_id))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "success": True,
+        "message": "Join request sent to the host! You will be notified when accepted.",
+        "status": "requested"
+    }), 201
+
+
+@app.route('/api/activities/<int:activity_id>/participants/<int:participant_user_id>/respond', methods=['POST'])
+@require_auth
+def respond_to_join_request(activity_id, participant_user_id):
+    """
+    Host accepts or declines a participant's join request.
+    Requires authentication. Verifies authenticated user is host_user_id.
+    """
+    data = request.get_json() or {}
+    raw_action = data.get('action') or data.get('status', '')
+    action = raw_action.strip().lower()
+
+    if action not in ('accept', 'accepted', 'decline', 'declined'):
+        return jsonify({
+            "success": False,
+            "error": "Invalid action. Must be 'accept' or 'decline'."
+        }), 400
+
+    target_status = 'accepted' if action in ('accept', 'accepted') else 'declined'
+
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    # Check activity ownership
+    cursor.execute("SELECT host_user_id, max_participants, status FROM activity_invites WHERE id = ?", (activity_id,))
+    invite = cursor.fetchone()
+
+    if not invite:
+        conn.close()
+        return jsonify({"success": False, "error": "Activity invite not found."}), 404
+
+    if invite['host_user_id'] != g.user_id:
+        conn.close()
+        return jsonify({"success": False, "error": "Forbidden: Only the host can accept or decline join requests."}), 403
+
+    # Update participant status
+    cursor.execute("""
+        UPDATE activity_participants
+        SET status = ?
+        WHERE invite_id = ? AND user_id = ?
+    """, (target_status, activity_id, participant_user_id))
+
+    if cursor.rowcount == 0:
+        conn.close()
+        return jsonify({"success": False, "error": "Participant join request not found."}), 404
+
+    # If accepted, check if max capacity reached
+    if target_status == 'accepted':
+        cursor.execute("SELECT COUNT(*) FROM activity_participants WHERE invite_id = ? AND status = 'accepted'", (activity_id,))
+        accepted_cnt = cursor.fetchone()[0]
+        max_p = invite['max_participants']
+
+        if max_p and accepted_cnt >= max_p:
+            cursor.execute("UPDATE activity_invites SET status = 'full' WHERE id = ?", (activity_id,))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "success": True,
+        "message": f"Join request from user #{participant_user_id} was {target_status}.",
+        "participant_status": target_status
+    })
+
+
+@app.route('/api/activities/<int:activity_id>', methods=['DELETE'])
+@require_auth
+def cancel_activity(activity_id):
+    """
+    Cancels an activity invite.
+    Requires authentication. Verifies authenticated user is host_user_id.
+    """
+    conn = sqlite3.connect("database.db")
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT host_user_id FROM activity_invites WHERE id = ?", (activity_id,))
+    row = cursor.fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify({"success": False, "error": "Activity invite not found."}), 404
+
+    if row[0] != g.user_id:
+        conn.close()
+        return jsonify({"success": False, "error": "Forbidden: Only the host can cancel this activity."}), 403
+
+    cursor.execute("UPDATE activity_invites SET status = 'cancelled' WHERE id = ?", (activity_id,))
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "success": True,
+        "message": f"Activity #{activity_id} has been cancelled."
+    })
 
 
 # ---------------- RUN APP ----------------

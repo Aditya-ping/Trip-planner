@@ -13,6 +13,8 @@ import dynamic from "next/dynamic";
 import TicketDivider from "./TicketDivider";
 
 import { API_BASE_URL } from "@/utils/config";
+import { LocalEvents } from "./LocalEvents";
+import { TravelBuddyActivities } from "./TravelBuddyActivities";
 
 const ItineraryMap = dynamic(() => import("./ItineraryMap"), { ssr: false });
 
@@ -173,6 +175,66 @@ export default function AITripPlanner() {
   const [translatedMap, setTranslatedMap] = useState<Record<string, string>>({});
   const [activeLangMap, setActiveLangMap] = useState<Record<string, string>>({});
   const [loadingLangMap, setLoadingLangMap] = useState<Record<string, boolean>>({});
+
+  // Conversational Refinement State
+  const [previousResult, setPreviousResult] = useState<GeneratedTrip | null>(null);
+  const [refinementInput, setRefinementInput] = useState("");
+  const [refining, setRefining] = useState(false);
+  const [refinementNote, setRefinementNote] = useState<string | null>(null);
+
+  const handleRefineTrip = async (instructionText?: string) => {
+    const textToSubmit = instructionText || refinementInput;
+    if (!textToSubmit.trim() || !result || refining) return;
+
+    setRefining(true);
+    setPreviousResult(result); // Save current result for 1-step Undo
+
+    try {
+      const response = await fetch(`${FLASK_API}/api/refine-trip`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          city: result.city,
+          days: result.days,
+          pace: result.pace,
+          vibe: result.vibe,
+          instruction: textToSubmit,
+          itinerary: result.itinerary
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to refine itinerary");
+      }
+
+      const data = await response.json();
+      if (data.success && data.itinerary) {
+        setResult(prev => prev ? {
+          ...prev,
+          itinerary: data.itinerary,
+          total_trip_cost: data.total_trip_cost || prev.total_trip_cost,
+          budget_remaining: data.budget_remaining || prev.budget_remaining
+        } : null);
+        setRefinementNote(data.refinement_note || `Refined itinerary: "${textToSubmit}"`);
+        setRefinementInput("");
+      } else {
+        throw new Error(data.error || "Refinement failed");
+      }
+    } catch (err: any) {
+      console.error("Refinement error:", err);
+      alert(`Refinement Error: ${err.message || "Failed to modify itinerary"}`);
+    } finally {
+      setRefining(false);
+    }
+  };
+
+  const handleUndoRefinement = () => {
+    if (previousResult) {
+      setResult(previousResult);
+      setPreviousResult(null);
+      setRefinementNote(null);
+    }
+  };
 
   const handleTranslatePlaceDesc = async (placeId: number | undefined, placeName: string, lang: string) => {
     const key = placeId ? `id_${placeId}` : `name_${placeName}`;
@@ -639,6 +701,101 @@ export default function AITripPlanner() {
                         )}
                       </div>
 
+                      {/* Conversational Refinement AI Bar */}
+                      <div className="p-4 rounded-xl bg-[#0B0F1A] border border-[#C9A15A]/30 space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-[#C9A15A]/15 border border-[#C9A15A]/40 flex items-center justify-center text-[#C9A15A]">
+                              <Sparkles className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-heading font-black text-[#EDEAE2] uppercase tracking-wider">
+                                Refine Itinerary with AI
+                              </h4>
+                              <p className="text-[11px] text-[#8A94A6]">
+                                Type a request to modify specific days without regenerating the full trip.
+                              </p>
+                            </div>
+                          </div>
+
+                          {previousResult && (
+                            <button
+                              type="button"
+                              onClick={handleUndoRefinement}
+                              className="px-3 py-1.5 rounded-lg border border-[#C9A15A]/40 bg-[#161B2C] hover:bg-[#C9A15A]/15 text-[#C9A15A] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                              <span>Undo Refinement</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Input Bar */}
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={refinementInput}
+                            onChange={(e) => setRefinementInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleRefineTrip();
+                              }
+                            }}
+                            placeholder="e.g. 'Make Day 2 less packed' or 'Swap for a tea cafe'"
+                            className="flex-1 bg-[#161B2C] border border-[#C9A15A]/30 rounded-xl px-4 py-2.5 text-xs text-[#EDEAE2] placeholder-[#8A94A6] focus:outline-none focus:border-[#C9A15A]"
+                          />
+                          <button
+                            type="button"
+                            disabled={refining || !refinementInput.trim()}
+                            onClick={() => handleRefineTrip()}
+                            className="px-5 py-2.5 rounded-xl bg-[#C9A15A] hover:bg-[#b08b46] text-[#0B0F1A] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                          >
+                            {refining ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                            <span>{refining ? "Refining..." : "Refine"}</span>
+                          </button>
+                        </div>
+
+                        {/* Quick Suggestion Pills */}
+                        <div className="flex flex-wrap items-center gap-2 pt-1 text-[10px]">
+                          <span className="text-[#8A94A6] font-semibold">Try:</span>
+                          {[
+                            "Make Day 2 less packed",
+                            "Add a heritage tea cafe",
+                            "More outdoor nature spots"
+                          ].map((promptText) => (
+                            <button
+                              key={promptText}
+                              type="button"
+                              disabled={refining}
+                              onClick={() => {
+                                setRefinementInput(promptText);
+                                handleRefineTrip(promptText);
+                              }}
+                              className="px-2.5 py-1 rounded-lg border border-[#C9A15A]/20 bg-[#161B2C] hover:border-[#C9A15A]/50 text-[#8A94A6] hover:text-[#EDEAE2] font-medium transition-all cursor-pointer"
+                            >
+                              ✨ {promptText}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Active Refinement Toast Note */}
+                        {refinementNote && (
+                          <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center justify-between gap-2">
+                            <span className="font-semibold">✓ {refinementNote}</span>
+                            {previousResult && (
+                              <button
+                                type="button"
+                                onClick={handleUndoRefinement}
+                                className="text-[10px] underline font-bold hover:text-emerald-300 cursor-pointer shrink-0"
+                              >
+                                Undo
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
                       {/* Day-by-Day */}
                       <div className="space-y-6">
                         {result.itinerary.map((day, dIdx) => {
@@ -824,6 +981,12 @@ export default function AITripPlanner() {
                          );
                       })}
                       </div>
+
+                      {/* Local Events Section */}
+                      <LocalEvents city={result.city} />
+
+                      {/* Traveler Activity Invites Section */}
+                      <TravelBuddyActivities city={result.city} />
 
                       {/* Packing List */}
                       <div className="pt-1">

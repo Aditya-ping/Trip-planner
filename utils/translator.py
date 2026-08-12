@@ -1,6 +1,9 @@
 import sqlite3
 import requests
 import urllib.parse
+import logging
+
+logger = logging.getLogger("aerotravel.translator")
 
 SUPPORTED_LANGUAGES = {
     "en": "English",
@@ -28,24 +31,27 @@ def translate_place_description(place_id, text, target_lang):
             conn.close()
             return row[0]
     except Exception as db_err:
-        print(f"[Translation DB Read Error] {db_err}")
+        logger.error(f"[Translation DB Read Error] place_id={place_id}, lang={target_lang}: {db_err}")
 
     translated_text = None
 
     # Tier 2: Free Google Translate GTX Endpoint
     try:
+        logger.info(f"[Google Translate GTX] Translating place_id={place_id} to lang='{target_lang}'")
         url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={target_lang}&dt=t&q={urllib.parse.quote(text)}"
         resp = requests.get(url, timeout=4)
+        logger.info(f"[Google Translate GTX] Response status={resp.status_code}")
         if resp.status_code == 200:
             data = resp.json()
             if data and isinstance(data, list) and len(data) > 0 and isinstance(data[0], list):
                 translated_text = "".join([segment[0] for segment in data[0] if segment and len(segment) > 0 and segment[0]])
     except Exception as e:
-        print(f"[Translation API Error] {e}")
+        logger.error(f"[Google Translate GTX Error] place_id={place_id}, lang='{target_lang}': {e}")
 
     # Tier 3: LibreTranslate API Fallback
     if not translated_text:
         try:
+            logger.info(f"[LibreTranslate API] Fallback translating place_id={place_id} to lang='{target_lang}'")
             url = "https://libretranslate.de/translate"
             payload = {
                 "q": text,
@@ -54,11 +60,12 @@ def translate_place_description(place_id, text, target_lang):
                 "format": "text"
             }
             resp = requests.post(url, json=payload, timeout=4)
+            logger.info(f"[LibreTranslate API] Response status={resp.status_code}")
             if resp.status_code == 200:
                 data = resp.json()
                 translated_text = data.get("translatedText")
         except Exception as e:
-            print(f"[LibreTranslate Error] {e}")
+            logger.error(f"[LibreTranslate API Error] place_id={place_id}, lang='{target_lang}': {e}")
 
     # Fallback to original text if API fails
     if not translated_text:

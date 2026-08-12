@@ -5,6 +5,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 export interface User {
   id: number;
   email: string;
+  is_admin?: boolean;
 }
 
 interface AuthContextType {

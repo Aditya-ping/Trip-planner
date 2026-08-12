@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, CreditCard, ShieldCheck, Calendar, Users, 
   MapPin, CheckCircle2, Ticket, Sparkles, Loader2, QrCode, Building, ExternalLink, PlaneTakeoff,
-  X, Armchair, Compass, AlertCircle, Train
+  X, Armchair, Compass, AlertCircle, Train, Copy, Check
 } from "lucide-react";
 import { useHotels } from "@/hooks/useHotels";
 import { useFlights, Flight } from "@/hooks/useFlights";
@@ -386,16 +386,8 @@ function CheckoutContent() {
     }
   }, [rates, selectedHotel?.key]);
 
-  if (!pkg) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-bg-main text-text-muted">
-        <Loader2 className="w-8 h-8 animate-spin text-accent-primary" />
-      </div>
-    );
-  }
-
   // Parse days & nights
-  const days = parseInt(pkg.duration.match(/\d+/)?.[0] || "3", 10);
+  const days = pkg ? parseInt(pkg.duration.match(/\d+/)?.[0] || "3", 10) : 3;
   const nights = Math.max(1, days - 1);
 
   // Guide daily rate varies depending on location
@@ -409,12 +401,12 @@ function CheckoutContent() {
 
   const citySearch = packageIdParam === "custom" 
     ? (searchParams.get("city") || "Bangalore") 
-    : (pkg.id === 1 ? "Jaipur" : pkg.id === 2 ? "Kochi" : "Leh Ladakh");
+    : (pkg?.id === 1 ? "Jaipur" : pkg?.id === 2 ? "Kochi" : "Leh Ladakh");
 
   const dailyGuideRate = getGuideRateByLocation(citySearch);
 
   // Dynamic pricing calculation
-  const baseCost = pkg.priceNum * travelers;
+  const baseCost = pkg ? pkg.priceNum * travelers : 0;
   const hotelNightly = selectedRoom ? selectedRoom.price : (selectedHotel ? selectedHotel.price : 0);
   const hotelTotal = hotelNightly * nights * travelers;
 
@@ -435,6 +427,88 @@ function CheckoutContent() {
   // GST: 5%
   const gst = Math.round(subtotal * 0.05);
   const grandTotal = subtotal + gst;
+
+  // Group Cost Splitting State
+  const [enableCostSplit, setEnableCostSplit] = useState(false);
+  const [splitCount, setSplitCount] = useState<number>(2);
+  const [splitMode, setSplitMode] = useState<"even" | "custom">("even");
+  const [customShares, setCustomShares] = useState<Array<{ id: number; label: string; amount: number }>>([]);
+  const [copiedShares, setCopiedShares] = useState(false);
+
+  // Sync splitCount with travelers selection by default
+  useEffect(() => {
+    if (travelers > 1) {
+      setSplitCount(Math.min(10, Math.max(2, travelers)));
+    }
+  }, [travelers]);
+
+  // Even split calculator helper
+  const calculateEvenShares = useCallback((total: number, count: number) => {
+    const base = Math.floor(total / count);
+    const remainder = total - base * count;
+    return Array.from({ length: count }, (_, idx) => ({
+      id: idx + 1,
+      label: idx === 0 ? `Person 1 (Lead - ${fullName || 'Lead Traveler'})` : `Person ${idx + 1} (Traveler ${idx + 1})`,
+      amount: idx === 0 ? base + remainder : base
+    }));
+  }, [fullName]);
+
+  // Synchronize customShares when grandTotal, splitCount, splitMode, or fullName changes
+  useEffect(() => {
+    if (splitMode === "even" || customShares.length !== splitCount) {
+      setCustomShares(calculateEvenShares(grandTotal, splitCount));
+    } else {
+      setCustomShares(prev => {
+        return prev.slice(0, splitCount).map((p, idx) => ({
+          ...p,
+          label: idx === 0 ? `Person 1 (Lead - ${fullName || 'Lead Traveler'})` : `Person ${idx + 1} (Traveler ${idx + 1})`
+        }));
+      });
+    }
+  }, [grandTotal, splitCount, splitMode, fullName, calculateEvenShares]);
+
+  const customSum = customShares.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+  const splitDelta = grandTotal - customSum;
+  const isSplitBalanced = splitDelta === 0;
+
+  if (!pkg) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-bg-main text-text-muted">
+        <Loader2 className="w-8 h-8 animate-spin text-accent-primary" />
+      </div>
+    );
+  }
+
+  const handleEqualizeShares = () => {
+    setCustomShares(calculateEvenShares(grandTotal, splitCount));
+    setSplitMode("even");
+  };
+
+  const handleShareAmountChange = (index: number, newAmount: number) => {
+    const val = Math.max(0, isNaN(newAmount) ? 0 : newAmount);
+    setSplitMode("custom");
+    setCustomShares(prev => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], amount: val };
+      return copy;
+    });
+  };
+
+  const handleCopyShares = () => {
+    const textLines = [
+      `✈️ AeroTravel Group Trip - Cost Split Breakdown`,
+      `Booking Reference: ${bookingRef || 'AERO-CONFIRMED'}`,
+      `Destination: ${pkg?.title || 'India Trip'} | Travel Date: ${travelDate}`,
+      `Grand Total: ₹${grandTotal.toLocaleString("en-IN")} (${splitCount} Travelers)`,
+      `--------------------------------------------------`,
+      ...customShares.map(s => `• ${s.label}: ₹${s.amount.toLocaleString("en-IN")} (${((s.amount / (grandTotal || 1)) * 100).toFixed(1)}%)`),
+      `--------------------------------------------------`,
+      `Shared via AeroTravel AI Trip Planner`
+    ];
+    navigator.clipboard.writeText(textLines.join("\n"));
+    setCopiedShares(true);
+    setTimeout(() => setCopiedShares(false), 3000);
+  };
 
   const validateStep1 = () => {
     const errors: Record<string, string> = {};
@@ -1336,6 +1410,146 @@ function CheckoutContent() {
                     <span>Total Amount</span>
                     <span className="text-accent-sunset">₹{grandTotal.toLocaleString("en-IN")}</span>
                   </div>
+
+                  {/* Group Cost Splitter Card */}
+                  <div className="mt-4 pt-4 border-t border-dashed border-border-color">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="toggle-cost-split" className="text-xs font-bold text-fg-main flex items-center gap-1.5 cursor-pointer">
+                        <Users className="w-3.5 h-3.5 text-accent-primary" />
+                        <span>Split cost with group?</span>
+                      </label>
+                      <button
+                        id="toggle-cost-split"
+                        type="button"
+                        onClick={() => setEnableCostSplit(!enableCostSplit)}
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          enableCostSplit ? "bg-accent-primary" : "bg-fg-main/20"
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                            enableCostSplit ? "translate-x-4" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {enableCostSplit && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-3 bg-fg-main/[0.03] border border-border-color rounded-xl p-3 space-y-3"
+                      >
+                        {/* Group Count Selector & Mode Toggle */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-color/60 pb-2.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] uppercase tracking-wider font-extrabold text-text-muted">Travelers:</span>
+                            <div className="flex items-center border border-border-color rounded-lg bg-card-bg overflow-hidden text-xs">
+                              <button
+                                type="button"
+                                disabled={splitCount <= 2}
+                                onClick={() => setSplitCount(Math.max(2, splitCount - 1))}
+                                className="px-2 py-0.5 hover:bg-fg-main/10 disabled:opacity-30 disabled:cursor-not-allowed font-bold"
+                              >
+                                -
+                              </button>
+                              <span className="px-2 font-black text-accent-primary">{splitCount}</span>
+                              <button
+                                type="button"
+                                disabled={splitCount >= 10}
+                                onClick={() => setSplitCount(Math.min(10, splitCount + 1))}
+                                className="px-2 py-0.5 hover:bg-fg-main/10 disabled:opacity-30 disabled:cursor-not-allowed font-bold"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="flex bg-fg-main/5 p-0.5 rounded-lg border border-border-color text-[10px] font-bold">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSplitMode("even");
+                                setCustomShares(calculateEvenShares(grandTotal, splitCount));
+                              }}
+                              className={`px-2 py-1 rounded-md transition-all ${
+                                splitMode === "even" ? "bg-accent-primary text-white shadow-sm" : "text-text-muted hover:text-fg-main"
+                              }`}
+                            >
+                              Even
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSplitMode("custom")}
+                              className={`px-2 py-1 rounded-md transition-all ${
+                                splitMode === "custom" ? "bg-accent-primary text-white shadow-sm" : "text-text-muted hover:text-fg-main"
+                              }`}
+                            >
+                              Custom
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Shares Input List */}
+                        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                          {customShares.map((share, idx) => {
+                            const pct = grandTotal > 0 ? ((share.amount / grandTotal) * 100).toFixed(1) : "0.0";
+                            return (
+                              <div key={share.id} className="flex items-center justify-between text-xs gap-2">
+                                <span className="text-[11px] text-text-muted truncate flex-1" title={share.label}>
+                                  {share.label}
+                                </span>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[9px] font-bold text-accent-sunset bg-accent-sunset/10 px-1.5 py-0.5 rounded">
+                                    {pct}%
+                                  </span>
+                                  <div className="relative w-24">
+                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-text-muted font-bold text-[10px]">₹</span>
+                                    <input
+                                      type="number"
+                                      value={share.amount}
+                                      onChange={(e) => handleShareAmountChange(idx, parseInt(e.target.value, 10))}
+                                      className="w-full bg-card-bg border border-border-color rounded-md pl-5 pr-1 py-1 text-right text-xs font-bold text-fg-main focus:outline-none focus:border-accent-primary"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Balance Summary & Equalize Button */}
+                        <div className="pt-2 border-t border-border-color/60 flex flex-wrap items-center justify-between text-[11px]">
+                          <div className="flex items-center gap-1.5 font-bold">
+                            <span className="text-text-muted">Allocated:</span>
+                            <span className={isSplitBalanced ? "text-accent-emerald font-extrabold" : "text-accent-sunset font-extrabold"}>
+                              ₹{customSum.toLocaleString("en-IN")}
+                            </span>
+                            {isSplitBalanced ? (
+                              <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold bg-accent-emerald/15 text-accent-emerald px-1.5 py-0.5 rounded-full">
+                                ✓ Balanced
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold bg-amber-500/15 text-amber-400 px-1.5 py-0.5 rounded-full">
+                                {splitDelta > 0 ? `₹${splitDelta.toLocaleString("en-IN")} left` : `₹${Math.abs(splitDelta).toLocaleString("en-IN")} over`}
+                              </span>
+                            )}
+                          </div>
+
+                          {!isSplitBalanced && (
+                            <button
+                              type="button"
+                              onClick={handleEqualizeShares}
+                              className="text-[10px] font-bold text-accent-primary hover:underline cursor-pointer"
+                            >
+                              Equalize
+                            </button>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -1441,6 +1655,48 @@ function CheckoutContent() {
                       ₹{grandTotal.toLocaleString("en-IN")}
                     </span>
                   </div>
+
+                  {/* Group Cost Distribution Card on Digital Boarding Pass */}
+                  {enableCostSplit && (
+                    <div className="bg-[#101422] border border-[#C9A15A]/30 rounded-xl p-5 space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-color/60 pb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-accent-primary/10 border border-accent-primary/30 flex items-center justify-center text-accent-primary">
+                            <Users className="w-4 h-4" />
+                          </div>
+                          <div className="text-left">
+                            <h4 className="text-xs font-heading font-black uppercase tracking-wider text-fg-main">
+                              Group Cost Distribution ({splitCount} Travelers)
+                            </h4>
+                            <p className="text-[10px] text-text-muted">
+                              Total trip cost split ({splitMode === "even" ? "Equal Shares" : "Custom Split"})
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleCopyShares}
+                          className="px-3 py-1.5 rounded-lg bg-fg-main/5 hover:bg-fg-main/10 border border-border-color text-xs font-bold text-accent-primary flex items-center gap-1.5 transition-all cursor-pointer"
+                        >
+                          {copiedShares ? <CheckCircle2 className="w-3.5 h-3.5 text-accent-emerald" /> : <Copy className="w-3.5 h-3.5" />}
+                          <span>{copiedShares ? "Copied Breakdown!" : "Copy Shares"}</span>
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                        {customShares.map((s) => (
+                          <div key={s.id} className="flex items-center justify-between bg-fg-main/[0.03] border border-border-color/60 p-2.5 rounded-lg text-xs">
+                            <span className="font-medium text-fg-main truncate mr-2 text-left" title={s.label}>
+                              {s.label}
+                            </span>
+                            <span className="font-black text-accent-sunset">
+                              ₹{s.amount.toLocaleString("en-IN")}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

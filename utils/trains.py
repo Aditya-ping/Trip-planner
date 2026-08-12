@@ -148,6 +148,7 @@ def search_indian_trains(origin, destination, date_str=None):
     # Tier 1: RapidAPI Indian Railways wrapper (if key provided)
     if rapidapi_key:
         try:
+            logger.info(f"[Trains API] Fetching trains from RapidAPI for {from_code} -> {to_code}")
             url = "https://indian-railways1.p.rapidapi.com/trainsBetweenStations"
             headers = {
                 "X-RapidAPI-Key": rapidapi_key,
@@ -155,6 +156,7 @@ def search_indian_trains(origin, destination, date_str=None):
             }
             params = {"fromStationCode": from_code, "toStationCode": to_code}
             resp = requests.get(url, headers=headers, params=params, timeout=4)
+            logger.info(f"[Trains API] Response status={resp.status_code} for {from_code}->{to_code}")
             if resp.status_code == 200:
                 data = resp.json()
                 results = data.get("trains", [])

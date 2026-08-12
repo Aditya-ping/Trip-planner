@@ -1,5 +1,18 @@
 import os
 import requests
+import logging
+
+logger = logging.getLogger("aerotravel.notifications")
+
+def mask_email(email: str) -> str:
+    if not email or "@" not in email:
+        return "***"
+    user, domain = email.split("@", 1)
+    if len(user) <= 2:
+        masked_user = user[0] + "*"
+    else:
+        masked_user = user[0] + "*" * (len(user) - 2) + user[-1]
+    return f"{masked_user}@{domain}"
 
 def send_booking_confirmation_email(booking_data):
     """
@@ -10,7 +23,7 @@ def send_booking_confirmation_email(booking_data):
     try:
         email = booking_data.get("email")
         if not email:
-            print("[Notification Warning] No email provided in booking data.")
+            logger.warning("[Notification Warning] No email provided in booking data.")
             return False
 
         ref_id = booking_data.get("reference_id", "AERO-UNKNOWN")
@@ -128,19 +141,21 @@ def send_booking_confirmation_email(booking_data):
                     }
                 ]
             }
+            logger.info(f"[SendGrid API] Sending email notification for ref_id='{ref_id}' to email='{mask_email(email)}'")
             resp = requests.post(url, json=payload, headers=headers, timeout=5)
+            logger.info(f"[SendGrid API] Response status={resp.status_code} for ref_id='{ref_id}'")
             if resp.status_code in [200, 202]:
-                print(f"[Email Notification] Successfully sent booking confirmation email to {email} via SendGrid.")
+                logger.info(f"[Email Notification] Successfully sent booking confirmation email to {mask_email(email)} via SendGrid.")
                 return True
             else:
-                print(f"[Email Notification Error] SendGrid HTTP {resp.status_code}: {resp.text}")
+                logger.error(f"[Email Notification Error] SendGrid HTTP {resp.status_code}: {resp.text}")
                 return False
         else:
-            print(f"[Email Notification Sandbox] Simulated booking confirmation email to '{email}' for Ref: {ref_id}.")
+            logger.info(f"[Email Notification Sandbox] Simulated booking confirmation email to '{mask_email(email)}' for Ref: {ref_id}.")
             return True
 
     except Exception as e:
-        print(f"[Notification Non-Blocking Exception] Failed to send email: {e}")
+        logger.error(f"[Notification Non-Blocking Exception] Failed to send email for ref_id='{ref_id}': {e}")
         return False
 
 
@@ -156,12 +171,13 @@ def send_booking_confirmation_sms(phone_number, booking_data):
         account_sid = os.getenv("TWILIO_ACCOUNT_SID")
         auth_token = os.getenv("TWILIO_AUTH_TOKEN")
         from_phone = os.getenv("TWILIO_PHONE_NUMBER")
+        ref_id = booking_data.get("reference_id", "AERO-UNKNOWN")
 
         if not account_sid or not auth_token or not from_phone:
-            print(f"[SMS Notification Sandbox] Simulated SMS confirmation to {phone_number} for Ref: {booking_data.get('reference_id')}")
+            masked_phone = phone_number[:3] + "****" + phone_number[-3:] if len(phone_number) >= 6 else "***"
+            logger.info(f"[SMS Notification Sandbox] Simulated SMS confirmation to {masked_phone} for Ref: {ref_id}")
             return True
 
-        ref_id = booking_data.get("reference_id", "AERO-UNKNOWN")
         destination = booking_data.get("destination", "India")
         cost = booking_data.get("total_cost", 0)
 
@@ -175,14 +191,16 @@ def send_booking_confirmation_sms(phone_number, booking_data):
             "Body": sms_body
         }
 
+        logger.info(f"[Twilio SMS API] Sending SMS notification for ref_id='{ref_id}'")
         resp = requests.post(url, auth=auth, data=data, timeout=5)
+        logger.info(f"[Twilio SMS API] Response status={resp.status_code} for ref_id='{ref_id}'")
         if resp.status_code in [200, 201]:
-            print(f"[SMS Notification] Successfully sent SMS to {phone_number} via Twilio.")
+            logger.info(f"[SMS Notification] Successfully sent SMS for ref_id='{ref_id}' via Twilio.")
             return True
         else:
-            print(f"[SMS Notification Error] Twilio HTTP {resp.status_code}: {resp.text}")
+            logger.error(f"[SMS Notification Error] Twilio HTTP {resp.status_code}: {resp.text}")
             return False
 
     except Exception as e:
-        print(f"[Notification Non-Blocking Exception] Failed to send SMS: {e}")
+        logger.error(f"[Notification Non-Blocking Exception] Failed to send SMS for ref_id='{ref_id}': {e}")
         return False

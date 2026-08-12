@@ -52,3 +52,36 @@ def calculate_checkout_pricing(
         "grand_total": grand_total,
         "daily_guide_rate": daily_guide_rate
     }
+
+
+def calculate_even_shares(grand_total: int, traveler_count: int) -> list:
+    """
+    Splits grand_total evenly among traveler_count persons.
+    Assigns rounding remainder to Person 1 (Lead Traveler) so sum equals grand_total.
+    """
+    if traveler_count <= 0:
+        return []
+    base = grand_total // traveler_count
+    remainder = grand_total - (base * traveler_count)
+    shares = []
+    for i in range(traveler_count):
+        shares.append({
+            "id": i + 1,
+            "label": f"Person {i + 1}" if i > 0 else "Person 1 (Lead)",
+            "amount": base + remainder if i == 0 else base
+        })
+    return shares
+
+
+def validate_custom_shares(grand_total: int, shares: list) -> dict:
+    """
+    Calculates total allocated amount and checks if custom shares sum to grand_total.
+    """
+    allocated = sum(s.get("amount", 0) for s in shares)
+    delta = grand_total - allocated
+    return {
+        "allocated": allocated,
+        "grand_total": grand_total,
+        "delta": delta,
+        "is_balanced": delta == 0
+    }

@@ -1,7 +1,7 @@
 import requests
 import json
 
-def test_geosearch(lat, lon):
+def run_geosearch(lat=26.9124, lon=75.7873):
     url = "https://en.wikipedia.org/w/api.php"
     headers = {
         "User-Agent": "TravelEaseAI/1.0 (contact@traveleaseai.com)"

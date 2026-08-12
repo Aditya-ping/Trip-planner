@@ -3,6 +3,9 @@ import time
 import hmac
 import hashlib
 import requests
+import logging
+
+logger = logging.getLogger("aerotravel.payment")
 
 def get_razorpay_keys():
     key_id = os.getenv("RAZORPAY_TEST_KEY_ID", "rzp_test_demo_key_id")
@@ -22,6 +25,7 @@ def create_razorpay_order(amount_inr, currency="INR"):
 
     # If test keys are default demo placeholders, return sandbox order payload
     if key_id.startswith("rzp_test_demo"):
+        logger.info(f"[Razorpay API] Sandbox mode: Creating demo order for amount=₹{amount_inr}")
         return {
             "success": True,
             "id": f"order_demo_{int(time.time())}",
@@ -33,6 +37,7 @@ def create_razorpay_order(amount_inr, currency="INR"):
         }
 
     try:
+        logger.info(f"[Razorpay API] Creating live test order for amount=₹{amount_inr} ({currency})")
         url = "https://api.razorpay.com/v1/orders"
         auth = (key_id, key_secret)
         payload = {
@@ -42,6 +47,7 @@ def create_razorpay_order(amount_inr, currency="INR"):
             "payment_capture": 1
         }
         response = requests.post(url, auth=auth, json=payload, timeout=10)
+        logger.info(f"[Razorpay API] Response status={response.status_code}")
         data = response.json()
 
         if response.status_code == 200 and "id" in data:
@@ -55,13 +61,13 @@ def create_razorpay_order(amount_inr, currency="INR"):
                 "is_sandbox": False
             }
         else:
-            print(f"[Razorpay Order Error] {data}")
+            logger.error(f"[Razorpay API Error] Order creation failed: {data}")
             return {
                 "success": False,
                 "error": data.get("error", {}).get("description", "Failed to create Razorpay order")
             }
     except Exception as e:
-        print(f"[Razorpay Exception] {e}")
+        logger.error(f"[Razorpay API Error] Request exception: {e}")
         return {"success": False, "error": str(e)}
 
 
