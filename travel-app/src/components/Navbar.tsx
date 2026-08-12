@@ -432,7 +432,9 @@ export default function Navbar() {
                             if (dest.toLowerCase().includes(k)) city = v;
                           });
 
-                          window.location.href = `/checkout?packageId=custom&city=${encodeURIComponent(city)}&priceNum=${bookingData.total_cost}&days=${nights + 1} Days / ${nights} Nights&image=https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80&includeFlights=true`;
+                          const durationStr = `${nights + 1} Days / ${nights} Nights`;
+                          const imgUrl = "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80";
+                          window.location.href = `/checkout?packageId=custom&city=${encodeURIComponent(city)}&priceNum=${bookingData.total_cost}&days=${encodeURIComponent(durationStr)}&image=${encodeURIComponent(imgUrl)}&includeFlights=true`;
                         }}
                         className="flex items-center justify-center gap-1 w-full py-2 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary hover:opacity-95 text-white text-[10px] font-bold shadow-md transition-colors cursor-pointer"
                       >

@@ -813,7 +813,8 @@ export default function AITripPlanner() {
                     type="button"
                     onClick={() => {
                       const imgUrl = cityImages[result.city] || "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80";
-                      router.push(`/checkout?packageId=custom&city=${encodeURIComponent(result.city)}&priceNum=9999&days=${result.days} Days / ${result.days - 1} Nights&image=${encodeURIComponent(imgUrl)}`);
+                      const durationStr = `${result.days} Days / ${result.days - 1} Nights`;
+                      router.push(`/checkout?packageId=custom&city=${encodeURIComponent(result.city)}&priceNum=9999&days=${encodeURIComponent(durationStr)}&image=${encodeURIComponent(imgUrl)}`);
                     }}
                     className="px-8 py-3.5 rounded-xl bg-[#C9A15A] hover:bg-[#E6C887] text-[#0B0F1A] text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer w-full md:w-auto"
                   >
@@ -878,7 +879,8 @@ export default function AITripPlanner() {
                         <button
                           onClick={() => {
                             const imgUrl = cityImages[result.city] || "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80";
-                            router.push(`/checkout?packageId=custom&city=${encodeURIComponent(result.city)}&priceNum=9999&days=${result.days} Days / ${result.days - 1} Nights&image=${encodeURIComponent(imgUrl)}`);
+                            const durationStr = `${result.days} Days / ${result.days - 1} Nights`;
+                            router.push(`/checkout?packageId=custom&city=${encodeURIComponent(result.city)}&priceNum=9999&days=${encodeURIComponent(durationStr)}&image=${encodeURIComponent(imgUrl)}`);
                           }}
                           className="px-6 py-3 rounded-xl bg-[#C9A15A] hover:bg-[#E6C887] text-[#0B0F1A] text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 w-full cursor-pointer"
                         >
