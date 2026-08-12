@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { API_BASE_URL } from '../utils/config';
+import { getApiBaseUrl } from '../utils/config';
 
 export interface City {
   city: string;
@@ -46,7 +46,7 @@ export function useFlights() {
     setCitiesLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/flights/cities`);
+      const res = await fetch(`${getApiBaseUrl()}/api/flights/cities`);
       const data = await res.json();
       if (data.cities) {
         setCities(data.cities);
@@ -60,21 +60,21 @@ export function useFlights() {
   }, []);
 
   const searchFlights = useCallback(async (
-    originIata: string,
-    destinationName: string,
+    fromIata: string,
+    toCity: string,
     date: string,
-    adults: number = 1
+    count: number = 1
   ): Promise<FlightSearchData | null> => {
     setFlightsLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams({
-        from: originIata,
-        destination: destinationName,
+        from: fromIata,
+        to: toCity,
         date,
-        adults: adults.toString()
+        count: count.toString()
       });
-      const res = await fetch(`${API_BASE_URL}/api/flights/search?${params.toString()}`);
+      const res = await fetch(`${getApiBaseUrl()}/api/flights/search?${params.toString()}`);
       const data = await res.json();
       
       if (data.error) {

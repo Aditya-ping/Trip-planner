@@ -1,8 +1,6 @@
 // travel-app/src/hooks/useHotels.js
 import { useState } from 'react'
-import { API_BASE_URL } from '../utils/config'
-
-const API = API_BASE_URL
+import { getApiBaseUrl } from '../utils/config'
 
 export function useHotels() {
   const [hotels, setHotels]   = useState([])
@@ -15,7 +13,7 @@ export function useHotels() {
     setLoading(true)
     setError(null)
     try {
-      const res  = await fetch(`${API}/api/hotels?destination=${destination}&sort=${sort}&limit=10`)
+      const res  = await fetch(`${getApiBaseUrl()}/api/hotels?destination=${destination}&sort=${sort}&limit=10`)
       const data = await res.json()
       setHotels(data.hotels || [])
     } catch (e) {
@@ -30,7 +28,7 @@ export function useHotels() {
     setLoading(true)
     try {
       const params = new URLSearchParams({ hotel_key: hotelKey, chk_in: checkIn, chk_out: checkOut, rooms, adults })
-      const res    = await fetch(`${API}/api/hotel-rates?${params}`)
+      const res    = await fetch(`${getApiBaseUrl()}/api/hotel-rates?${params}`)
       const data   = await res.json()
       setRates(data)
     } catch (e) {

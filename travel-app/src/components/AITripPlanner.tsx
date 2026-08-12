@@ -417,7 +417,7 @@ export default function AITripPlanner() {
         <div className="absolute inset-0 bg-gradient-to-r from-bg-main via-bg-main/90 to-bg-main" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
+      <div className="relative z-10 max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 w-full min-w-0">
         {!loading && result ? (
           /* ── EXPANDED 12-COLUMN RESULT SHOWCASE MODE ── */
           <motion.div
@@ -795,6 +795,31 @@ export default function AITripPlanner() {
                       </label>
                     ))}
                   </div>
+                </div>
+
+                {/* Prominent Full-Width Custom Booking Banner (No Horizontal Scrollbar) */}
+                <div className="p-6 rounded-2xl bg-[#0B0F1A] border border-[#C9A15A]/30 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-14 h-14 rounded-2xl bg-[#C9A15A]/15 border border-[#C9A15A]/30 text-[#C9A15A] flex items-center justify-center text-2xl shrink-0">
+                      🗺️
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-bold text-[#C9A15A] uppercase tracking-wider block">Custom Itinerary Booking</span>
+                      <h4 className="text-base font-bold text-[#EDEAE2] truncate">Book Custom {result.city} Itinerary</h4>
+                      <span className="text-xs text-[#8A94A6] block mt-0.5">{result.days} Days / {result.days - 1} Nights · Includes stay & transit planning</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const imgUrl = cityImages[result.city] || "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80";
+                      router.push(`/checkout?packageId=custom&city=${encodeURIComponent(result.city)}&priceNum=9999&days=${result.days} Days / ${result.days - 1} Nights&image=${encodeURIComponent(imgUrl)}`);
+                    }}
+                    className="px-8 py-3.5 rounded-xl bg-[#C9A15A] hover:bg-[#E6C887] text-[#0B0F1A] text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer w-full md:w-auto"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    Book Custom Trip Now
+                  </button>
                 </div>
               </div>
 

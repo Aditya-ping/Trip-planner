@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../utils/config';
+import { getApiBaseUrl } from '../utils/config';
 
 export interface TrainOption {
   train_number: string;
@@ -30,7 +30,7 @@ export function useTrains(origin: string, destination: string) {
     setLoading(true);
     setError(null);
 
-    fetch(`${API_BASE_URL}/api/trains/search?dep=${encodeURIComponent(origin)}&arr=${encodeURIComponent(destination)}`)
+    fetch(`${getApiBaseUrl()}/api/trains/search?dep=${encodeURIComponent(origin)}&arr=${encodeURIComponent(destination)}`)
       .then((res) => res.json())
       .then((data) => {
         if (!isMounted) return;
