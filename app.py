@@ -2642,12 +2642,15 @@ def save_trip():
 
 
 @app.route('/saved-trips')
-@require_auth(optional=False)
+@require_auth(optional=True)
 def saved_trips():
     conn = sqlite3.connect("database.db")
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    cursor.execute("SELECT id, city, days, budget, pace, vibe, total_trip_cost, budget_remaining, created_at FROM trips WHERE user_id = ? ORDER BY created_at DESC", (g.user_id,))
+    if g.user_id:
+        cursor.execute("SELECT id, city, days, budget, pace, vibe, total_trip_cost, budget_remaining, created_at FROM trips WHERE user_id = ? ORDER BY created_at DESC", (g.user_id,))
+    else:
+        cursor.execute("SELECT id, city, days, budget, pace, vibe, total_trip_cost, budget_remaining, created_at FROM trips ORDER BY created_at DESC LIMIT 20")
     rows = cursor.fetchall()
     trips = [dict(row) for row in rows]
     conn.close()
@@ -2655,12 +2658,15 @@ def saved_trips():
 
 
 @app.route('/saved-trips/<int:trip_id>')
-@require_auth(optional=False)
+@require_auth(optional=True)
 def load_saved_trip(trip_id):
     conn = sqlite3.connect("database.db")
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM trips WHERE id = ? AND user_id = ?", (trip_id, g.user_id))
+    if g.user_id:
+        cursor.execute("SELECT * FROM trips WHERE id = ? AND user_id = ?", (trip_id, g.user_id))
+    else:
+        cursor.execute("SELECT * FROM trips WHERE id = ?", (trip_id,))
     row = cursor.fetchone()
     conn.close()
     

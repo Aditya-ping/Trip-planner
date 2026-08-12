@@ -845,7 +845,7 @@ async function generateTrip(e) {
       </div>`;
     }
 
-    html += `<div style="margin-top:20px;"><a href="http://localhost:5000/generate" target="_blank" class="btn btn-primary" style="text-decoration:none;"><i class="fas fa-external-link-alt"></i> View Full Interactive Map</a></div></div>`;
+    html += `<div style="margin-top:20px;"><a href="/generate" target="_blank" class="btn btn-primary" style="text-decoration:none;"><i class="fas fa-external-link-alt"></i> View Full Interactive Map</a></div></div>`;
     resultEl.innerHTML = html;
     loadStats();
   } catch(err) {
