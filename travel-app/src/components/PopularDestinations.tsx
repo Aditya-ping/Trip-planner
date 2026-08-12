@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, ArrowRight, X, Calendar, Users, ShieldCheck, CheckCircle, HelpCircle, ArrowLeft, Loader2, ExternalLink, PlaneTakeoff, ChevronLeft, ChevronRight } from "lucide-react";
-import { API_BASE_URL } from "@/utils/config";
+import { API_BASE_URL, getApiBaseUrl } from "@/utils/config";
 import { LocalEvents } from "./LocalEvents";
 import { TravelBuddyActivities } from "./TravelBuddyActivities";
 
@@ -489,6 +490,7 @@ const destinations: Destination[] = [
 ];
 
 export default function PopularDestinations() {
+  const router = useRouter();
   const [selectedDest, setSelectedDest] = useState<Destination | null>(null);
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
@@ -1315,7 +1317,8 @@ export default function PopularDestinations() {
                           const nights = getNights();
                           const days = nights + 1;
                           const img = selectedDest.image;
-                          window.location.href = `/checkout?packageId=custom&city=${encodeURIComponent(city)}&priceNum=${total}&days=${days} Days / ${nights} Nights&image=${encodeURIComponent(img)}&includeFlights=true`;
+                          const daysStr = `${days} Days / ${nights} Nights`;
+                          router.push(`/checkout?packageId=custom&city=${encodeURIComponent(city)}&priceNum=${total}&days=${encodeURIComponent(daysStr)}&image=${encodeURIComponent(img)}&includeFlights=true`);
                         }}
                         className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary hover:opacity-95 text-white text-[11px] font-extrabold shadow-md transition-colors cursor-pointer"
                       >
