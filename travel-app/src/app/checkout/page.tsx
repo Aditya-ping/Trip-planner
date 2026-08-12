@@ -243,7 +243,7 @@ function CheckoutContent() {
         : (pkg.id === 1 ? "Jaipur" : pkg.id === 2 ? "Kochi" : "Leh Ladakh");
       
       searchFlights(originCityIata, citySearch, travelDate, travelers).then(data => {
-        if (data) setAvailableFlights(data.flights);
+        if (data && Array.isArray(data.flights)) setAvailableFlights(data.flights);
         else setAvailableFlights([]);
       });
     }
@@ -335,7 +335,7 @@ function CheckoutContent() {
       if (enriched[0].rooms && enriched[0].rooms.length > 0) {
         setSelectedRoom(enriched[0].rooms[0]);
       }
-    } else if (!hotelsLoading && hotels.length === 0) {
+    } else if (!hotelsLoading && (!hotels || hotels.length === 0)) {
       // Fallback
       const key = (citySearch || "default").toLowerCase();
       const fallbackKey = Object.keys(fallbackHotels).find(k => key.includes(k)) || "default";
@@ -374,7 +374,7 @@ function CheckoutContent() {
   // Synchronize dynamic rates to selected hotel rooms list
   useEffect(() => {
     const ratesData = rates as any;
-    if (ratesData && ratesData.success && ratesData.rates && ratesData.rates.length > 0 && selectedHotel && selectedHotel.key === ratesData.hotel_key) {
+    if (ratesData && ratesData.success && Array.isArray(ratesData.rates) && ratesData.rates.length > 0 && selectedHotel && selectedHotel.key === ratesData.hotel_key) {
       const ratesMapped = ratesData.rates.map((r: any) => ({
         type: r.name,
         price: r.price || r.rate,
@@ -386,8 +386,8 @@ function CheckoutContent() {
     }
   }, [rates, selectedHotel?.key]);
 
-  // Parse days & nights
-  const days = pkg ? parseInt(pkg.duration.match(/\d+/)?.[0] || "3", 10) : 3;
+  // Parse days & nights safely
+  const days = pkg ? parseInt((pkg.duration || "3 Days").match(/\d+/)?.[0] || "3", 10) : 3;
   const nights = Math.max(1, days - 1);
 
   // Guide daily rate varies depending on location
