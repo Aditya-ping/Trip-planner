@@ -318,6 +318,10 @@ function CheckoutContent() {
     });
   }, [pkg, packageIdParam, searchParams]);
 
+  // Parse days & nights safely
+  const days = pkg ? parseInt((pkg.duration || "3 Days").match(/\d+/)?.[0] || "3", 10) : 3;
+  const nights = Math.max(1, days - 1);
+
   // Synchronize hook hotels state to checkout hotels list
   useEffect(() => {
     const citySearch = packageIdParam === "custom" 
@@ -358,10 +362,11 @@ function CheckoutContent() {
 
   // Fetch dynamic rates when selected hotel or travel date changes
   useEffect(() => {
-    if (!selectedHotel || !selectedHotel.key || !travelDate) return;
+    if (!selectedHotel || !selectedHotel.key) return;
     
-    const chkIn = travelDate;
-    const chkOut = addDaysToDateStr(travelDate, nights);
+    const defaultDate = new Date(Date.now() + 86400000 * 7).toISOString().split("T")[0];
+    const chkIn = travelDate || defaultDate;
+    const chkOut = addDaysToDateStr(chkIn, nights);
     
     if (chkIn && chkOut) {
       setRatesLoading(true);
@@ -369,26 +374,22 @@ function CheckoutContent() {
         setRatesLoading(false);
       });
     }
-  }, [selectedHotel?.key, travelDate]);
+  }, [selectedHotel?.key, travelDate, nights]);
 
   // Synchronize dynamic rates to selected hotel rooms list
   useEffect(() => {
     const ratesData = rates as any;
     if (ratesData && ratesData.success && Array.isArray(ratesData.rates) && ratesData.rates.length > 0 && selectedHotel && selectedHotel.key === ratesData.hotel_key) {
       const ratesMapped = ratesData.rates.map((r: any) => ({
-        type: r.name,
-        price: r.price || r.rate,
-        description: r.description || `Live rate from ${r.name}.`
+        type: r.name || r.type || "Live API Rate",
+        price: r.price || r.rate || selectedHotel.price,
+        description: r.description || `Live rate via API provider. Instant confirmation.`
       }));
       
       setSelectedHotel((prev) => prev ? { ...prev, rooms: ratesMapped } : null);
       setSelectedRoom(ratesMapped[0]);
     }
   }, [rates, selectedHotel?.key]);
-
-  // Parse days & nights safely
-  const days = pkg ? parseInt((pkg.duration || "3 Days").match(/\d+/)?.[0] || "3", 10) : 3;
-  const nights = Math.max(1, days - 1);
 
   // Guide daily rate varies depending on location
   const getGuideRateByLocation = (citySearch: string) => {
