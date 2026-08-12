@@ -821,7 +821,7 @@ def fetch_places_from_api(city, lat, lon):
 
 @app.route('/')
 def home():
-    frontend_url = os.getenv("FRONTEND_URL", "https://trip-planner-virid-one.vercel.app")
+    frontend_url = os.getenv("FRONTEND_URL", "https://trip-planner-git-main-trip-planner4.vercel.app")
     return render_template("index.html", frontend_url=frontend_url)
 
 
