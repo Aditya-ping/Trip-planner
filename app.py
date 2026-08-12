@@ -218,7 +218,16 @@ if env_frontend:
         if clean_url and clean_url not in allowed_origins:
             allowed_origins.append(clean_url)
 
-CORS(app, resources={r"/*": {"origins": allowed_origins}})
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    if request.method == 'OPTIONS':
+        response.status_code = 200
+    return response
 
 def rate_limit_key():
     user_id = getattr(g, 'user_id', None)
