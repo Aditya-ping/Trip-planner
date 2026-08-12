@@ -418,672 +418,672 @@ export default function AITripPlanner() {
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-
-          {/* ── Left: Form ── */}
-          <div className="lg:col-span-5 flex flex-col justify-center">
-            <span className="text-xs font-bold text-accent-primary uppercase tracking-widest block mb-2">
-              🚀 AI Magic Engine
-            </span>
-            <h2 className="font-heading font-black text-4xl md:text-6xl text-fg-main tracking-tight mb-5 leading-none">
-              Instant India Itinerary Planner
-            </h2>
-            <p className="text-base text-text-muted mb-8 leading-relaxed">
-              Pick any Indian city from our database, select your vibe, budget, and travel days. Watch the AI build a complete itinerary with transit routes, live costs, and weather advisories.
-            </p>
-
-            {/* API status pill */}
-            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold mb-6 w-fit shadow-inner ${apiOnline ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-orange-50 text-orange-700 border border-orange-200"}`}>
-              <Wifi className="w-3.5 h-3.5" />
-              {apiOnline ? `Live DB — ${cities.length} cities loaded` : "Offline — showing cached cities"}
+        {!loading && result ? (
+          /* ── EXPANDED 12-COLUMN RESULT SHOWCASE MODE ── */
+          <motion.div
+            key="result"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="w-full rounded-2xl bg-[#161B2C] border border-[#C9A15A]/30 overflow-hidden shadow-2xl text-[#EDEAE2] text-left"
+          >
+            {/* Top Navigation & Info Header */}
+            <div className="p-6 md:p-8 bg-[#0B0F1A] border-b border-[#C9A15A]/20 flex flex-wrap justify-between items-center gap-4">
+              <div>
+                <h3 className="font-heading font-black text-2xl md:text-3xl text-[#EDEAE2] flex items-center gap-3">
+                  <MapPin className="w-6 h-6 text-[#C9A15A]" />
+                  {cityEmojis[result.city] || "📍"} {result.city}
+                </h3>
+                <span className="text-xs font-mono text-[#8A94A6] uppercase tracking-wider block font-semibold mt-1">
+                  [ {result.days} DAYS · {result.pace} pace · {result.vibe} vibe · Est. Cost: ₹{result.total_trip_cost.toLocaleString('en-IN')} ]
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setResult(null)}
+                  className="px-4 py-2.5 rounded-xl bg-[#161B2C] hover:bg-[#C9A15A]/15 transition-all cursor-pointer border border-[#C9A15A]/30 flex items-center gap-2 text-xs font-bold text-[#8A94A6] hover:text-[#C9A15A]"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Reset & Plan New Trip
+                </button>
+              </div>
             </div>
 
-            <form onSubmit={handleGenerate} className="p-8 rounded-md bg-[#161B2C] border border-[#C9A15A]/30 shadow-document flex flex-col gap-6">
+            {/* Main Content Grid: 8-Column Timeline + 4-Column Sidebar */}
+            <div className="p-6 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+              
+              {/* Left Main Timeline (8 Columns) */}
+              <div className="lg:col-span-8 space-y-8 min-w-0">
+                
+                {/* Weather & AQI Summary */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Weather */}
+                  <div className="p-4 rounded-xl bg-[#0B0F1A] border border-[#C9A15A]/20 flex items-start gap-3">
+                    <CloudSun className="w-7 h-7 text-[#C9A15A] shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between flex-wrap gap-1.5">
+                        <div className="font-bold text-xs text-[#C9A15A]">{result.weather.temp} — {result.weather.condition}</div>
+                        {result.weather.elevation_m && result.weather.elevation_m > 1500 ? (
+                          <span className="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            🏔️ High Altitude ({result.weather.elevation_m}m)
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="text-xs text-[#8A94A6] mt-1 leading-relaxed">{result.weather.description}</p>
+                    </div>
+                  </div>
 
-              {/* City Dropdown — from DB */}
-              <div>
-                <label className="font-sans text-[11px] font-semibold text-[#8A94A6] uppercase tracking-wider block mb-2">
-                  Select Destination City
-                </label>
-                <select
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  className="w-full px-4 py-3 rounded-md border border-[#C9A15A]/30 bg-[#0B0F1A] text-sm font-semibold focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A] cursor-pointer text-[#EDEAE2]"
-                >
-                  {cities.map((c) => (
-                    <option key={c} value={c}>
-                      {cityEmojis[c] || "📍"} {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Budget slider */}
-              <div>
-                <label className="font-sans text-[11px] font-semibold text-[#8A94A6] uppercase tracking-wider block mb-2">
-                  Trip Budget: <span className="text-[#C9A15A] font-bold text-sm font-mono">₹{budget.toLocaleString("en-IN")}</span>
-                </label>
-                <input
-                  type="range"
-                  min={5000} max={200000} step={1000}
-                  value={budget}
-                  onChange={(e) => setBudget(Number(e.target.value))}
-                  className="w-full accent-[#C9A15A] cursor-pointer h-2 bg-[#0B0F1A] rounded-md appearance-none border border-[#C9A15A]/20"
-                />
-                <div className="flex justify-between text-[10px] text-[#8A94A6] mt-2 font-mono">
-                  <span>₹5,000</span><span>₹1,00,000</span><span>₹2,00,000</span>
+                  {/* AQI */}
+                  {result.aqi && (
+                    <div className={`p-4 rounded-xl border flex items-start gap-3 ${
+                      result.aqi.color === "emerald" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" :
+                      result.aqi.color === "yellow" ? "bg-amber-500/10 border-amber-500/30 text-amber-400" :
+                      result.aqi.color === "orange" ? "bg-orange-500/10 border-orange-500/30 text-orange-400" :
+                      result.aqi.color === "red" ? "bg-red-500/10 border-red-500/30 text-red-400" :
+                      "bg-purple-500/10 border-purple-500/30 text-purple-400"
+                    }`}>
+                      <div className="text-2xl shrink-0 leading-none">{result.aqi.badge_emoji}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1 flex-wrap">
+                          <span className="font-mono font-black text-xs tracking-wide uppercase">AQI {result.aqi.aqi} • {result.aqi.status}</span>
+                          <span className="text-[9px] opacity-75 font-mono px-1.5 py-0.5 rounded bg-black/20">LIVE AQI</span>
+                        </div>
+                        <p className="text-xs opacity-90 mt-1 leading-snug">{result.aqi.advice}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
 
-              {/* Pace + Days */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="font-sans text-[11px] font-semibold text-[#8A94A6] uppercase tracking-wider block mb-2">Travel Pace</label>
-                  <select
-                    value={pace}
-                    onChange={(e) => setPace(e.target.value)}
-                    className="w-full px-4 py-3 rounded-md border border-[#C9A15A]/30 bg-[#0B0F1A] text-sm font-semibold focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A] text-[#EDEAE2]"
-                  >
-                    <option value="relaxed">🧘 Relaxed (2/day)</option>
-                    <option value="moderate">🚶 Moderate (3/day)</option>
-                    <option value="packed">⚡ Packed (4/day)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="font-sans text-[11px] font-semibold text-[#8A94A6] uppercase tracking-wider block mb-2">Duration</label>
-                  <select
-                    value={daysCount}
-                    onChange={(e) => setDaysCount(Number(e.target.value))}
-                    className="w-full px-4 py-3 rounded-md border border-[#C9A15A]/30 bg-[#0B0F1A] text-sm font-semibold focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A] text-[#EDEAE2]"
-                  >
-                    {[2,3,4,5,6,7].map(d => (
-                      <option key={d} value={d}>{d} Day{d > 1 ? "s" : ""}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+                {/* AI Conversational Refinement Bar */}
+                <div className="p-5 rounded-2xl bg-[#0B0F1A] border border-[#C9A15A]/30 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-[#C9A15A]/15 border border-[#C9A15A]/40 flex items-center justify-center text-[#C9A15A]">
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-heading font-black text-[#EDEAE2] uppercase tracking-wider">
+                          Refine Itinerary with AI
+                        </h4>
+                        <p className="text-xs text-[#8A94A6]">
+                          Type a request to modify specific days without regenerating the full trip.
+                        </p>
+                      </div>
+                    </div>
 
-              {/* Vibe */}
-              <div>
-                <label className="font-sans text-[11px] font-semibold text-[#8A94A6] uppercase tracking-wider block mb-2">Trip Vibe</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { id: "mixed",     label: "🎯 Mixed" },
-                    { id: "adventure", label: "⛰️ Adventure" },
-                    { id: "heritage",  label: "🕌 Heritage" },
-                    { id: "leisure",   label: "✨ Leisure" },
-                  ].map((item) => (
+                    {previousResult && (
+                      <button
+                        type="button"
+                        onClick={handleUndoRefinement}
+                        className="px-3.5 py-1.5 rounded-xl border border-[#C9A15A]/40 bg-[#161B2C] hover:bg-[#C9A15A]/15 text-[#C9A15A] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span>Undo Refinement</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={refinementInput}
+                      onChange={(e) => setRefinementInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleRefineTrip();
+                        }
+                      }}
+                      placeholder="e.g. 'Make Day 2 less packed' or 'Swap for a tea cafe'"
+                      className="flex-1 bg-[#161B2C] border border-[#C9A15A]/30 rounded-xl px-4 py-2.5 text-xs text-[#EDEAE2] placeholder-[#8A94A6] focus:outline-none focus:border-[#C9A15A]"
+                    />
                     <button
-                      key={item.id}
                       type="button"
-                      onClick={() => setVibe(item.id)}
-                      className={`px-3 py-2.5 rounded-md text-xs font-semibold border transition-all cursor-pointer ${
-                        vibe === item.id
-                          ? "bg-[#C9A15A] border-[#C9A15A] text-[#0B0F1A] font-bold shadow-md"
-                          : "border-[#C9A15A]/30 hover:bg-[#C9A15A]/10 text-[#EDEAE2]"
-                      }`}
+                      disabled={refining || !refinementInput.trim()}
+                      onClick={() => handleRefineTrip()}
+                      className="px-5 py-2.5 rounded-xl bg-[#C9A15A] hover:bg-[#b08b46] text-[#0B0F1A] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
                     >
-                      {item.label}
+                      {refining ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                      <span>{refining ? "Refining..." : "Refine"}</span>
                     </button>
-                  ))}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                    <span className="text-[#8A94A6] font-semibold text-xs">Try:</span>
+                    {[
+                      "Make Day 2 less packed",
+                      "Add a heritage tea cafe",
+                      "More outdoor nature spots"
+                    ].map((promptText) => (
+                      <button
+                        key={promptText}
+                        type="button"
+                        disabled={refining}
+                        onClick={() => {
+                          setRefinementInput(promptText);
+                          handleRefineTrip(promptText);
+                        }}
+                        className="px-3 py-1 rounded-lg border border-[#C9A15A]/20 bg-[#161B2C] hover:border-[#C9A15A]/50 text-[#8A94A6] hover:text-[#EDEAE2] text-xs font-medium transition-all cursor-pointer"
+                      >
+                        ✨ {promptText}
+                      </button>
+                    ))}
+                  </div>
+
+                  {refinementNote && (
+                    <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center justify-between gap-2">
+                      <span className="font-semibold">✓ {refinementNote}</span>
+                      {previousResult && (
+                        <button
+                          type="button"
+                          onClick={handleUndoRefinement}
+                          className="text-xs underline font-bold hover:text-emerald-300 cursor-pointer shrink-0"
+                        >
+                          Undo
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
 
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={loading || !city}
-                className="flex items-center justify-center gap-2 w-full py-4 rounded-md bg-[#C9A15A] hover:bg-[#E6C887] text-[#0B0F1A] font-bold text-sm shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Sparkles className="w-4 h-4" />
-                Generate {city ? `${city} Itinerary` : "Itinerary"}
-              </button>
-            </form>
-          </div>
-
-          {/* ── Right: Output ── */}
-          <div className="lg:col-span-7 h-[700px] relative w-full flex items-center justify-center">
-            <AnimatePresence mode="wait">
-
-              {/* Default */}
-              {!loading && !result && !error && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="w-full h-full rounded-md border border-dashed border-[#C9A15A]/30 flex flex-col justify-center items-center p-12 text-center text-text-muted bg-[#161B2C]"
-                >
-                  <div className="w-16 h-16 rounded-md bg-[#C9A15A]/10 text-[#C9A15A] border border-[#C9A15A]/30 flex items-center justify-center mb-6">
-                    <Sparkles className="w-8 h-8" />
-                  </div>
-                  <h3 className="font-heading font-extrabold text-2xl text-fg-main mb-2">
-                    Your India Itinerary Awaits
-                  </h3>
-                  <p className="text-sm max-w-sm mb-8 leading-relaxed font-sans text-[#8A94A6]">
-                    Choose from <strong>{cities.length} Indian cities</strong> in our live database. Set your vibe, budget, and duration — then hit generate!
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-2.5 max-w-lg">
-                    {cities.slice(0, 10).map(c => (
-                      <button
-                        key={c}
-                        onClick={() => setCity(c)}
-                        className={`px-3.5 py-1.5 rounded-md text-xs font-semibold border transition-all cursor-pointer ${city === c ? "bg-[#C9A15A] text-[#0B0F1A] border-[#C9A15A] font-bold shadow-md" : "border-[#C9A15A]/20 text-[#8A94A6] hover:border-[#C9A15A] bg-[#0B0F1A]"}`}
+                {/* Day-by-Day Timeline */}
+                <div className="space-y-6">
+                  {result.itinerary.map((day, dIdx) => {
+                    const dayFc = result.weather.daily_forecast?.find(df => df.day === day.day) || result.weather.daily_forecast?.[day.day - 1];
+                    return (
+                      <motion.div
+                        key={day.day}
+                        initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 18 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                          duration: 0.38,
+                          delay: dIdx * 0.12,
+                          ease: [0.22, 0.03, 0.26, 1]
+                        }}
                       >
-                        {cityEmojis[c]} {c}
-                      </button>
-                    ))}
-                    {cities.length > 10 && <span className="text-xs text-[#8A94A6] self-center font-bold">+{cities.length - 10} more</span>}
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Loading */}
-              {loading && (
-                <motion.div
-                  key="loading"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="w-full h-full rounded-md bg-[#161B2C] border border-[#C9A15A]/30 flex flex-col justify-center items-center p-8 text-center gap-4"
-                >
-                  <Loader2 className="w-12 h-12 text-[#C9A15A] animate-spin" />
-                  <h3 className="font-heading font-black text-xl text-fg-main">
-                    Building Your {city} Guide
-                  </h3>
-                  <motion.p
-                    key={loadingStep}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-sm text-[#8A94A6] max-w-xs font-sans"
-                  >
-                    {loadingStep}
-                  </motion.p>
-                  <div className="flex gap-1.5 mt-2">
-                    {loadingSteps.map((_, i) => (
-                      <div key={i} className={`h-1 rounded-full transition-all duration-500 ${i <= loadingSteps.indexOf(loadingStep) ? "w-10 bg-[#C9A15A]" : "w-5 bg-[#C9A15A]/20"}`} />
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Error */}
-              {!loading && error && (
-                <motion.div
-                  key="error"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="w-full h-full rounded-md border border-red-500/30 bg-[#161B2C] flex flex-col justify-center items-center p-12 text-center gap-4"
-                >
-                  <AlertCircle className="w-14 h-14 text-red-400" />
-                  <h3 className="font-heading font-bold text-xl text-red-400">Couldn&apos;t Generate Plan</h3>
-                  <p className="text-sm text-red-300 max-w-sm">{error}</p>
-                  <button
-                    onClick={() => setError(null)}
-                    className="mt-2 px-6 py-3 rounded-md bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-bold transition-all cursor-pointer"
-                  >
-                    Try Again
-                  </button>
-                </motion.div>
-              )}
-
-              {/* Result */}
-              {!loading && result && (
-                <motion.div
-                  key="result"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="w-full h-full rounded-md bg-[#161B2C] border border-[#C9A15A]/30 flex flex-col overflow-hidden shadow-document text-[#EDEAE2] text-left"
-                >
-                  {/* Header */}
-                  <div className="p-6 bg-[#0B0F1A] border-b border-[#C9A15A]/20 flex justify-between items-center shrink-0">
-                    <div>
-                      <h3 className="font-heading font-black text-xl text-[#EDEAE2] flex items-center gap-2">
-                        <MapPin className="w-5 h-5 text-[#C9A15A]" />
-                        {cityEmojis[result.city] || "📍"} {result.city}
-                      </h3>
-                      <span className="text-[11px] font-mono text-[#8A94A6] uppercase tracking-wider block font-semibold mt-1">
-                        [ {result.days} DAYS · {result.pace} pace · {result.vibe} vibe ]
-                      </span>
-                    </div>
-                    <div>
-                      <button
-                        onClick={() => setResult(null)}
-                        className="p-2.5 rounded-md bg-[#161B2C] hover:bg-[#C9A15A]/10 transition-all cursor-pointer border border-[#C9A15A]/30 flex items-center gap-1.5 text-xs font-semibold text-[#8A94A6] hover:text-[#C9A15A]"
-                      >
-                        <RotateCcw className="w-4 h-4" />
-                        Reset Itinerary
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Scrollable Body */}
-                  <div className="p-6 flex-grow overflow-y-auto flex flex-col md:flex-row gap-6">
-                    {/* Left Column: Itinerary Details */}
-                    <div className="flex-1 space-y-6">
-                      {/* Weather & AQI Summary Row */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {/* Weather */}
-                        <div className="p-4 rounded-md bg-[#0B0F1A] border border-[#C9A15A]/20 flex items-start gap-3">
-                          <CloudSun className="w-7 h-7 text-[#C9A15A] shrink-0 mt-0.5" />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between flex-wrap gap-1.5">
-                              <div className="font-bold text-xs text-[#C9A15A]">{result.weather.temp} — {result.weather.condition}</div>
-                              {result.weather.elevation_m && result.weather.elevation_m > 1500 ? (
-                                <span className="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                  🏔️ High Altitude ({result.weather.elevation_m}m)
-                                </span>
-                              ) : null}
-                            </div>
-                            <p className="text-[11px] text-[#8A94A6] mt-0.5 line-clamp-2">{result.weather.description}</p>
-                          </div>
-                        </div>
-
-                        {/* Real-time Air Quality Index (AQI) Badge */}
-                        {result.aqi && (
-                          <div className={`p-4 rounded-md border flex items-start gap-3 ${
-                            result.aqi.color === "emerald" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" :
-                            result.aqi.color === "yellow" ? "bg-amber-500/10 border-amber-500/30 text-amber-400" :
-                            result.aqi.color === "orange" ? "bg-orange-500/10 border-orange-500/30 text-orange-400" :
-                            result.aqi.color === "red" ? "bg-red-500/10 border-red-500/30 text-red-400" :
-                            "bg-purple-500/10 border-purple-500/30 text-purple-400"
-                          }`}>
-                            <div className="text-2xl shrink-0 leading-none">{result.aqi.badge_emoji}</div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-1">
-                                <span className="font-mono font-black text-xs tracking-wide uppercase">AQI {result.aqi.aqi} • {result.aqi.status}</span>
-                                <span className="text-[9px] opacity-75 font-mono px-1.5 py-0.5 rounded bg-black/20">LIVE AQI</span>
-                              </div>
-                              <p className="text-[11px] opacity-90 mt-0.5 leading-snug">{result.aqi.advice}</p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Conversational Refinement AI Bar */}
-                      <div className="p-4 rounded-xl bg-[#0B0F1A] border border-[#C9A15A]/30 space-y-3">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-lg bg-[#C9A15A]/15 border border-[#C9A15A]/40 flex items-center justify-center text-[#C9A15A]">
-                              <Sparkles className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <h4 className="text-xs font-heading font-black text-[#EDEAE2] uppercase tracking-wider">
-                                Refine Itinerary with AI
-                              </h4>
-                              <p className="text-[11px] text-[#8A94A6]">
-                                Type a request to modify specific days without regenerating the full trip.
-                              </p>
-                            </div>
+                        {dIdx > 0 && <TicketDivider className="opacity-60 my-6" />}
+                        <div className="border-l-2 border-[#C9A15A] pl-5 ml-2 relative">
+                          <div className="w-4 h-4 rounded-sm bg-[#0B0F1A] border border-[#C9A15A] absolute -left-[9px] top-0 flex items-center justify-center">
+                            <div className="w-2 h-2 bg-[#C9A15A]" />
                           </div>
 
-                          {previousResult && (
-                            <button
-                              type="button"
-                              onClick={handleUndoRefinement}
-                              className="px-3 py-1.5 rounded-lg border border-[#C9A15A]/40 bg-[#161B2C] hover:bg-[#C9A15A]/15 text-[#C9A15A] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
-                            >
-                              <RotateCcw className="w-3.5 h-3.5" />
-                              <span>Undo Refinement</span>
-                            </button>
-                          )}
-                        </div>
-
-                        {/* Input Bar */}
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={refinementInput}
-                            onChange={(e) => setRefinementInput(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                handleRefineTrip();
-                              }
-                            }}
-                            placeholder="e.g. 'Make Day 2 less packed' or 'Swap for a tea cafe'"
-                            className="flex-1 bg-[#161B2C] border border-[#C9A15A]/30 rounded-xl px-4 py-2.5 text-xs text-[#EDEAE2] placeholder-[#8A94A6] focus:outline-none focus:border-[#C9A15A]"
-                          />
-                          <button
-                            type="button"
-                            disabled={refining || !refinementInput.trim()}
-                            onClick={() => handleRefineTrip()}
-                            className="px-5 py-2.5 rounded-xl bg-[#C9A15A] hover:bg-[#b08b46] text-[#0B0F1A] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-                          >
-                            {refining ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                            <span>{refining ? "Refining..." : "Refine"}</span>
-                          </button>
-                        </div>
-
-                        {/* Quick Suggestion Pills */}
-                        <div className="flex flex-wrap items-center gap-2 pt-1 text-[10px]">
-                          <span className="text-[#8A94A6] font-semibold">Try:</span>
-                          {[
-                            "Make Day 2 less packed",
-                            "Add a heritage tea cafe",
-                            "More outdoor nature spots"
-                          ].map((promptText) => (
-                            <button
-                              key={promptText}
-                              type="button"
-                              disabled={refining}
-                              onClick={() => {
-                                setRefinementInput(promptText);
-                                handleRefineTrip(promptText);
-                              }}
-                              className="px-2.5 py-1 rounded-lg border border-[#C9A15A]/20 bg-[#161B2C] hover:border-[#C9A15A]/50 text-[#8A94A6] hover:text-[#EDEAE2] font-medium transition-all cursor-pointer"
-                            >
-                              ✨ {promptText}
-                            </button>
-                          ))}
-                        </div>
-
-                        {/* Active Refinement Toast Note */}
-                        {refinementNote && (
-                          <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center justify-between gap-2">
-                            <span className="font-semibold">✓ {refinementNote}</span>
-                            {previousResult && (
-                              <button
-                                type="button"
-                                onClick={handleUndoRefinement}
-                                className="text-[10px] underline font-bold hover:text-emerald-300 cursor-pointer shrink-0"
-                              >
-                                Undo
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Day-by-Day */}
-                      <div className="space-y-6">
-                        {result.itinerary.map((day, dIdx) => {
-                          const dayFc = result.weather.daily_forecast?.find(df => df.day === day.day) || result.weather.daily_forecast?.[day.day - 1];
-                          return (
-                            <motion.div
-                              key={day.day}
-                              initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 18 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{
-                                duration: 0.38,
-                                delay: dIdx * 0.12,
-                                ease: [0.22, 0.03, 0.26, 1]
-                              }}
-                            >
-                              {dIdx > 0 && <TicketDivider className="opacity-60 my-4" />}
-                              <div className="border-l-2 border-[#C9A15A] pl-4 ml-2 relative">
-                              <div className="w-3.5 h-3.5 rounded-sm bg-[#0B0F1A] border border-[#C9A15A] absolute -left-[8px] top-0 flex items-center justify-center">
-                                <div className="w-1.5 h-1.5 bg-[#C9A15A]" />
-                              </div>
-                              <div className="font-mono font-bold text-xs text-[#C9A15A] mb-3 uppercase tracking-wider flex flex-wrap items-center justify-between gap-2">
-                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded border border-[#C9A15A]/40 bg-[#C9A15A]/10 font-mono tracking-widest text-[11px]">
-                                  <Calendar className="w-3.5 h-3.5" />
-                                  [ TKT-SEQ 0{day.day} • DAY 0{day.day} ]
-                                </div>
-                                {dayFc && (
-                                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#0B0F1A] text-[#8A94A6] text-[11px] font-semibold border border-[#C9A15A]/20 font-sans tracking-normal capitalize">
-                                    <span>{dayFc.icon}</span>
-                                    <span>{dayFc.temp_min}°C / {dayFc.temp_max}°C</span>
-                                    <span className="text-[#8A94A6] hidden sm:inline">• {dayFc.condition}</span>
-                                    {dayFc.precip_probability >= 20 && (
-                                      <span className="text-blue-400 font-semibold">• ☔ {dayFc.precip_probability}% rain</span>
-                                    )}
-                                  </div>
+                          {/* Day Header Row */}
+                          <div className="font-mono font-bold text-xs text-[#C9A15A] mb-4 uppercase tracking-wider flex flex-wrap items-center justify-between gap-2.5">
+                            <div className="flex items-center gap-2 px-3 py-1 rounded-lg border border-[#C9A15A]/40 bg-[#C9A15A]/10 font-mono tracking-widest text-xs">
+                              <Calendar className="w-4 h-4" />
+                              [ TKT-SEQ 0{day.day} • DAY 0{day.day} ]
+                            </div>
+                            {dayFc && (
+                              <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-[#0B0F1A] text-[#8A94A6] text-xs font-semibold border border-[#C9A15A]/20 font-sans tracking-normal capitalize flex-wrap">
+                                <span>{dayFc.icon}</span>
+                                <span>{dayFc.temp_min}°C / {dayFc.temp_max}°C</span>
+                                <span>• {dayFc.condition}</span>
+                                {dayFc.precip_probability >= 20 && (
+                                  <span className="text-blue-400 font-semibold">• ☔ {dayFc.precip_probability}% rain</span>
                                 )}
                               </div>
-                              <div className="space-y-3">
-                              {day.places.map((place, idx) => {
-                                const placeKey = place.id ? `id_${place.id}` : `name_${place.name}`;
-                                const activeLang = activeLangMap[placeKey] || 'en';
-                                const displayedDesc = (activeLang !== 'en' && translatedMap[`${placeKey}_${activeLang}`]) 
-                                  ? translatedMap[`${placeKey}_${activeLang}`] 
-                                  : place.description;
+                            )}
+                          </div>
 
-                                return (
-                                  <div key={idx} className="p-4 rounded-md bg-[#0B0F1A] border border-[#C9A15A]/20 flex gap-3.5 items-start relative group/place">
-                                    <div className="flex flex-col items-center shrink-0">
-                                      <img
-                                        src={place.image}
-                                        alt={place.name}
-                                        className="w-14 h-14 rounded-md object-cover border border-[#C9A15A]/30"
-                                        onError={(e) => { (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${place.name}/80/80`; }}
-                                      />
+                          {/* Day Places List */}
+                          <div className="space-y-4">
+                            {day.places.map((place, idx) => {
+                              const placeKey = place.id ? `id_${place.id}` : `name_${place.name}`;
+                              const activeLang = activeLangMap[placeKey] || 'en';
+                              const displayedDesc = (activeLang !== 'en' && translatedMap[`${placeKey}_${activeLang}`]) 
+                                ? translatedMap[`${placeKey}_${activeLang}`] 
+                                : place.description;
+
+                              return (
+                                <div key={idx} className="p-4 sm:p-5 rounded-2xl bg-[#0B0F1A] border border-[#C9A15A]/20 flex flex-col sm:flex-row gap-4 items-start relative group/place hover:border-[#C9A15A]/50 transition-all">
+                                  <img
+                                    src={place.image}
+                                    alt={place.name}
+                                    className="w-full sm:w-20 h-32 sm:h-20 rounded-xl object-cover border border-[#C9A15A]/30 shrink-0"
+                                    onError={(e) => { (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${place.name}/120/120`; }}
+                                  />
+                                  <div className="flex-1 min-w-0 w-full">
+                                    <div className="flex justify-between items-start gap-2">
+                                      <h4 className="font-heading font-bold text-sm text-[#EDEAE2] leading-snug">{place.name}</h4>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemovePlace(day.day - 1, idx)}
+                                        className="p-1 rounded text-[#8A94A6] hover:text-red-400 transition-all cursor-pointer shrink-0"
+                                        title="Remove Place"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex justify-between items-start">
-                                        <h4 className="font-heading font-bold text-xs text-[#EDEAE2] truncate">{place.name}</h4>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleRemovePlace(day.day - 1, idx)}
-                                          className="p-1 rounded text-[#8A94A6] hover:text-red-400 transition-all cursor-pointer shrink-0 ml-1"
-                                          title="Remove Place"
-                                        >
-                                          <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
+                                    <p className="text-xs text-[#8A94A6] mt-1 leading-relaxed font-sans">{displayedDesc}</p>
+
+                                    <div className="flex items-center justify-between flex-wrap gap-2.5 mt-3 pt-2 border-t border-[#C9A15A]/20">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-[10px] bg-[#C9A15A]/10 text-[#C9A15A] border border-[#C9A15A]/30 px-2.5 py-0.5 rounded-md font-mono uppercase">{place.category}</span>
+                                        <span className="text-xs text-[#C9A15A] font-semibold">⭐ {place.rating}</span>
                                       </div>
-                                      <p className="text-[10px] text-[#8A94A6] mt-0.5 leading-relaxed font-sans">{displayedDesc}</p>
 
-                                      <div className="flex items-center justify-between flex-wrap gap-2 mt-2 pt-1 border-t border-[#C9A15A]/20">
-                                        <div className="flex items-center gap-1.5">
-                                          <span className="text-[9px] bg-[#C9A15A]/10 text-[#C9A15A] border border-[#C9A15A]/30 px-2 py-0.5 rounded font-mono uppercase">{place.category}</span>
-                                          <span className="text-[9px] text-[#C9A15A] font-semibold">⭐ {place.rating}</span>
-                                        </div>
-
-                                        {/* Regional Language Translation Pills */}
-                                        <div className="flex items-center gap-1">
-                                          {[
-                                            { code: 'en', label: '🇬🇧 EN' },
-                                            { code: 'hi', label: '🇮🇳 हिंदी' },
-                                            { code: 'kn', label: '🇮🇳 ಕನ್ನಡ' },
-                                            { code: 'ta', label: '🇮🇳 தமிழ்' }
-                                          ].map((l) => (
-                                            <button
-                                              key={l.code}
-                                              type="button"
-                                              onClick={() => handleTranslatePlaceDesc(place.id, place.name, l.code)}
-                                              disabled={loadingLangMap[placeKey]}
-                                              className={`text-[8px] px-1.5 py-0.5 rounded transition-all cursor-pointer ${
-                                                activeLang === l.code
-                                                  ? "bg-[#C9A15A] text-[#0B0F1A] font-bold"
-                                                  : "bg-[#161B2C] text-[#8A94A6] hover:text-[#EDEAE2]"
-                                              }`}
-                                            >
-                                              {loadingLangMap[placeKey] && activeLang === l.code ? "..." : l.label}
-                                            </button>
-                                          ))}
-                                        </div>
+                                      {/* Regional Language Translation Pills */}
+                                      <div className="flex items-center gap-1 flex-wrap">
+                                        {[
+                                          { code: 'en', label: '🇬🇧 EN' },
+                                          { code: 'hi', label: '🇮🇳 हिंदी' },
+                                          { code: 'kn', label: '🇮🇳 ಕನ್ನಡ' },
+                                          { code: 'ta', label: '🇮🇳 தமிழ்' }
+                                        ].map((l) => (
+                                          <button
+                                            key={l.code}
+                                            type="button"
+                                            onClick={() => handleTranslatePlaceDesc(place.id, place.name, l.code)}
+                                            disabled={loadingLangMap[placeKey]}
+                                            className={`text-[9px] px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                                              activeLang === l.code
+                                                ? "bg-[#C9A15A] text-[#0B0F1A] font-bold"
+                                                : "bg-[#161B2C] text-[#8A94A6] hover:text-[#EDEAE2]"
+                                            }`}
+                                          >
+                                            {loadingLangMap[placeKey] && activeLang === l.code ? "..." : l.label}
+                                          </button>
+                                        ))}
                                       </div>
                                     </div>
-                                  </div>
-                                );
-                              })}
-
-                              {/* Add Spot Custom Form */}
-                              {addingPlaceForDay === day.day ? (
-                                <div className="p-4 rounded-md border border-[#C9A15A]/30 bg-[#0B0F1A] flex flex-col gap-3">
-                                  <h5 className="text-[10px] font-mono font-bold text-[#C9A15A] uppercase tracking-wider">
-                                    [ ADD SPOT — DAY 0{day.day} ]
-                                  </h5>
-                                  
-                                  <div className="space-y-2">
-                                    <input
-                                      type="text"
-                                      placeholder="Spot Name (e.g. Royal Cafe)"
-                                      value={newPlaceName}
-                                      onChange={(e) => setNewPlaceName(e.target.value)}
-                                      className="w-full px-3 py-2 rounded-md border border-[#C9A15A]/30 bg-[#161B2C] text-xs text-[#EDEAE2] focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A]"
-                                    />
-                                    <input
-                                      type="text"
-                                      placeholder="Category (e.g. Sightseeing, Dining)"
-                                      value={newPlaceCategory}
-                                      onChange={(e) => setNewPlaceCategory(e.target.value)}
-                                      className="w-full px-3 py-2 rounded-md border border-[#C9A15A]/30 bg-[#161B2C] text-xs text-[#EDEAE2] focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A]"
-                                    />
-                                    <textarea
-                                      placeholder="Description (What to do there?)"
-                                      value={newPlaceDesc}
-                                      rows={2}
-                                      onChange={(e) => setNewPlaceDesc(e.target.value)}
-                                      className="w-full px-3 py-2 rounded-md border border-[#C9A15A]/30 bg-[#161B2C] text-xs text-[#EDEAE2] focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A] resize-none"
-                                    />
-                                  </div>
-
-                                  <div className="flex gap-2 justify-end">
-                                    <button
-                                      type="button"
-                                      onClick={() => setAddingPlaceForDay(null)}
-                                      className="px-3 py-1.5 rounded-md border border-[#C9A15A]/30 text-[10px] font-bold text-[#8A94A6] hover:text-[#EDEAE2] cursor-pointer transition-all"
-                                    >
-                                      Cancel
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleAddPlace(day.day - 1)}
-                                      disabled={!newPlaceName.trim()}
-                                      className="px-3 py-1.5 rounded-md bg-[#C9A15A] text-[#0B0F1A] text-[10px] font-bold hover:bg-[#E6C887] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                                    >
-                                      Add Spot
-                                    </button>
                                   </div>
                                 </div>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setAddingPlaceForDay(day.day);
-                                    setNewPlaceName("");
-                                    setNewPlaceDesc("");
-                                    setNewPlaceCategory("Sightseeing");
-                                  }}
-                                  className="w-full py-2 rounded-md border border-dashed border-[#C9A15A]/40 hover:border-[#C9A15A] hover:text-[#C9A15A] transition-all text-[11px] font-bold flex items-center justify-center gap-1.5 cursor-pointer text-[#8A94A6] bg-[#0B0F1A]"
-                                >
-                                  <Plus className="w-3.5 h-3.5" />
-                                  Add Custom Spot to Day {day.day}
-                                </button>
-                              )}
-                              {day.routes.length > 0 && (
-                                <div className="text-[10px] text-[#8A94A6] space-y-1 pl-1 font-mono">
-                                  {day.routes.map((r, i) => (
-                                    <div key={i} className="flex items-center gap-1">
-                                      <span>🚕</span>
-                                      <span>{r.from} → {r.to}</span>
-                                      {r.distance && <span className="opacity-60">· {r.distance}</span>}
-                                      {r.cost > 0 && <span className="text-[#C9A15A] font-semibold ml-auto">₹{r.cost}</span>}
-                                    </div>
-                                  ))}
+                              );
+                            })}
+
+                            {/* Add Spot Form */}
+                            {addingPlaceForDay === day.day ? (
+                              <div className="p-4 rounded-2xl border border-[#C9A15A]/30 bg-[#0B0F1A] flex flex-col gap-3">
+                                <h5 className="text-xs font-mono font-bold text-[#C9A15A] uppercase tracking-wider">
+                                  [ ADD SPOT — DAY 0{day.day} ]
+                                </h5>
+                                
+                                <div className="space-y-2">
+                                  <input
+                                    type="text"
+                                    placeholder="Spot Name (e.g. Royal Cafe)"
+                                    value={newPlaceName}
+                                    onChange={(e) => setNewPlaceName(e.target.value)}
+                                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#C9A15A]/30 bg-[#161B2C] text-xs text-[#EDEAE2] focus:outline-none focus:border-[#C9A15A]"
+                                  />
+                                  <input
+                                    type="text"
+                                    placeholder="Category (e.g. Sightseeing, Dining)"
+                                    value={newPlaceCategory}
+                                    onChange={(e) => setNewPlaceCategory(e.target.value)}
+                                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#C9A15A]/30 bg-[#161B2C] text-xs text-[#EDEAE2] focus:outline-none focus:border-[#C9A15A]"
+                                  />
+                                  <textarea
+                                    placeholder="Description (What to do there?)"
+                                    value={newPlaceDesc}
+                                    rows={2}
+                                    onChange={(e) => setNewPlaceDesc(e.target.value)}
+                                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#C9A15A]/30 bg-[#161B2C] text-xs text-[#EDEAE2] focus:outline-none focus:border-[#C9A15A] resize-none"
+                                  />
                                 </div>
-                              )}
-                            </div>
-                            </div>
-                            </motion.div>
-                         );
-                      })}
-                      </div>
 
-                      {/* Local Events Section */}
-                      <LocalEvents city={result.city} />
+                                <div className="flex gap-2 justify-end">
+                                  <button
+                                    type="button"
+                                    onClick={() => setAddingPlaceForDay(null)}
+                                    className="px-4 py-2 rounded-xl border border-[#C9A15A]/30 text-xs font-bold text-[#8A94A6] hover:text-[#EDEAE2] cursor-pointer transition-all"
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAddPlace(day.day - 1)}
+                                    disabled={!newPlaceName.trim()}
+                                    className="px-4 py-2 rounded-xl bg-[#C9A15A] text-[#0B0F1A] text-xs font-bold hover:bg-[#E6C887] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                  >
+                                    Add Spot
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAddingPlaceForDay(day.day);
+                                  setNewPlaceName("");
+                                  setNewPlaceDesc("");
+                                  setNewPlaceCategory("Sightseeing");
+                                }}
+                                className="w-full py-2.5 rounded-xl border border-dashed border-[#C9A15A]/40 hover:border-[#C9A15A] hover:text-[#C9A15A] transition-all text-xs font-bold flex items-center justify-center gap-2 cursor-pointer text-[#8A94A6] bg-[#0B0F1A]"
+                              >
+                                <Plus className="w-4 h-4" />
+                                Add Custom Spot to Day {day.day}
+                              </button>
+                            )}
 
-                      {/* Traveler Activity Invites Section */}
-                      <TravelBuddyActivities city={result.city} />
-
-                      {/* Packing List */}
-                      <div className="pt-1">
-                        <h4 className="font-heading font-extrabold text-xs mb-2.5 flex items-center gap-1.5 uppercase tracking-wider text-[#EDEAE2]">
-                          <CheckSquare className="w-3.5 h-3.5 text-[#C9A15A]" />
-                          Packing Checklist
-                        </h4>
-                        <div className="grid grid-cols-2 gap-2">
-                          {result.weather.packing.map((item) => (
-                            <label key={item} className="flex items-center gap-2 p-2 rounded-md border border-[#C9A15A]/20 bg-[#0B0F1A] text-[11px] text-[#8A94A6] cursor-pointer hover:bg-[#161B2C]">
-                              <input type="checkbox" className="w-3 h-3 accent-[#C9A15A]" defaultChecked />
-                              {item}
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right Column: Live Map */}
-                    <div className="w-full md:w-[320px] lg:w-[380px] shrink-0 sticky top-0 self-start">
-                      <div className="bg-card-bg/40 p-4 rounded-3xl border border-border-color backdrop-blur-md">
-                        <h4 className="font-heading font-black text-xs text-accent-primary uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5" />
-                          Interactive Route Map
-                        </h4>
-                        <ItineraryMap itinerary={result.itinerary} />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Contextual Premium Booking Options Footer */}
-                  <div className="p-5 bg-card-bg border-t border-border-color shrink-0 space-y-4">
-                    {matchingPkg ? (
-                      <div className="p-4 rounded-2xl bg-fg-main/5 border border-border-color flex flex-col sm:flex-row gap-4 items-center justify-between">
-                        <div className="flex items-center gap-3 w-full sm:w-auto">
-                          <img 
-                            src={matchingPkg.image} 
-                            alt={matchingPkg.title} 
-                            className="w-16 h-12 object-cover rounded-lg shrink-0 border border-border-color" 
-                          />
-                          <div>
-                            <span className="text-[9px] font-bold text-accent-sunset uppercase tracking-wider block">Matching Package Found</span>
-                            <h4 className="text-xs font-bold text-fg-main leading-tight line-clamp-1">{matchingPkg.title}</h4>
-                            <span className="text-[10px] text-text-muted">{matchingPkg.duration} · <strong className="text-accent-emerald">{matchingPkg.price}</strong></span>
+                            {day.routes.length > 0 && (
+                              <div className="text-xs text-[#8A94A6] space-y-1 pl-1 font-mono">
+                                {day.routes.map((r, i) => (
+                                  <div key={i} className="flex items-center gap-1.5 flex-wrap">
+                                    <span>🚕</span>
+                                    <span>{r.from} → {r.to}</span>
+                                    {r.distance && <span className="opacity-60">· {r.distance}</span>}
+                                    {r.cost > 0 && <span className="text-[#C9A15A] font-semibold ml-auto">₹{r.cost}</span>}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
-                        <div className="flex gap-2 w-full sm:w-auto shrink-0 justify-end">
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
+                {/* Local Events Section */}
+                <LocalEvents city={result.city} />
+
+                {/* Traveler Activity Invites Section */}
+                <TravelBuddyActivities city={result.city} />
+
+                {/* Packing Checklist */}
+                <div className="p-6 rounded-2xl bg-[#0B0F1A] border border-[#C9A15A]/20">
+                  <h4 className="font-heading font-extrabold text-xs mb-3 flex items-center gap-2 uppercase tracking-wider text-[#EDEAE2]">
+                    <CheckSquare className="w-4 h-4 text-[#C9A15A]" />
+                    Packing Checklist
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                    {result.weather.packing.map((item) => (
+                      <label key={item} className="flex items-center gap-2.5 p-2.5 rounded-xl border border-[#C9A15A]/20 bg-[#161B2C] text-xs text-[#8A94A6] cursor-pointer hover:bg-[#161B2C]/80">
+                        <input type="checkbox" className="w-3.5 h-3.5 accent-[#C9A15A]" defaultChecked />
+                        <span>{item}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Sidebar (4 Columns): Map & Booking Card */}
+              <div className="lg:col-span-4 space-y-6">
+                <div className="sticky top-28 space-y-6">
+                  {/* Interactive Map Card */}
+                  <div className="bg-[#0B0F1A] p-5 rounded-2xl border border-[#C9A15A]/30 shadow-xl">
+                    <h4 className="font-heading font-black text-xs text-[#C9A15A] uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" />
+                      Interactive Route Map
+                    </h4>
+                    <ItineraryMap itinerary={result.itinerary} />
+                  </div>
+
+                  {/* Booking Package Options */}
+                  <div className="p-5 rounded-2xl bg-[#0B0F1A] border border-[#C9A15A]/30 shadow-xl">
+                    {matchingPkg ? (
+                      <div className="space-y-4">
+                        <img 
+                          src={matchingPkg.image} 
+                          alt={matchingPkg.title} 
+                          className="w-full h-36 object-cover rounded-xl border border-[#C9A15A]/20" 
+                        />
+                        <div>
+                          <span className="text-[10px] font-bold text-[#C9A15A] uppercase tracking-wider block">Matching Package Found</span>
+                          <h4 className="text-sm font-bold text-[#EDEAE2] mt-0.5">{matchingPkg.title}</h4>
+                          <span className="text-xs text-[#8A94A6] block mt-1">{matchingPkg.duration} · <strong className="text-emerald-400">{matchingPkg.price}</strong></span>
+                        </div>
+                        <div className="flex gap-2 pt-1">
                           <a 
                             href="#packages" 
-                            className="px-4 py-2.5 rounded-xl border border-border-color text-text-muted hover:text-fg-main text-xs font-bold transition-all text-center flex-1 sm:flex-none"
+                            className="px-4 py-2.5 rounded-xl border border-[#C9A15A]/30 text-[#8A94A6] hover:text-[#EDEAE2] text-xs font-bold transition-all text-center flex-1"
                           >
-                            View Details
+                            Details
                           </a>
                           <button
                             onClick={() => handleBookPackage(matchingPkg.id)}
-                            className="px-5 py-2.5 rounded-xl bg-accent-primary text-white text-xs font-bold shadow-md hover:bg-accent-sunset transition-all flex items-center justify-center gap-1.5 flex-1 sm:flex-none cursor-pointer"
+                            className="px-5 py-2.5 rounded-xl bg-[#C9A15A] hover:bg-[#E6C887] text-[#0B0F1A] text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 flex-1 cursor-pointer"
                           >
-                            <CreditCard className="w-3.5 h-3.5" />
+                            <CreditCard className="w-4 h-4" />
                             Book Now
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="p-4 rounded-2xl bg-fg-main/5 border border-border-color flex flex-col sm:flex-row gap-4 items-center justify-between">
-                        <div className="flex items-center gap-3 w-full sm:w-auto">
-                          <div className="w-12 h-12 bg-accent-sunset/10 text-accent-sunset rounded-lg flex items-center justify-center font-bold text-lg">
-                            🗺️
-                          </div>
-                          <div>
-                            <span className="text-[9px] font-bold text-accent-sunset uppercase tracking-wider block">Custom Itinerary Booking</span>
-                            <h4 className="text-xs font-bold text-fg-main leading-tight">Book Custom {result.city} Itinerary</h4>
-                            <span className="text-[10px] text-text-muted">{result.days} Days / {result.days - 1} Nights · Includes stay & transit planning</span>
-                          </div>
+                      <div className="space-y-4 text-center">
+                        <div className="w-14 h-14 bg-[#C9A15A]/15 text-[#C9A15A] border border-[#C9A15A]/30 rounded-2xl flex items-center justify-center font-bold text-2xl mx-auto">
+                          🗺️
                         </div>
-                        <div className="w-full sm:w-auto shrink-0 flex justify-end">
-                          <button
-                            onClick={() => {
-                              const imgUrl = cityImages[result.city] || "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80";
-                              // Standard package coordination fee baseline of 9,999 INR
-                              router.push(`/checkout?packageId=custom&city=${encodeURIComponent(result.city)}&priceNum=9999&days=${result.days} Days / ${result.days - 1} Nights&image=${encodeURIComponent(imgUrl)}`);
-                            }}
-                            className="px-6 py-2.5 rounded-xl bg-accent-primary text-white text-xs font-bold shadow-md hover:bg-accent-sunset transition-all flex items-center justify-center gap-1.5 w-full sm:w-auto cursor-pointer"
-                          >
-                            <CreditCard className="w-3.5 h-3.5" />
-                            Book Custom Trip Now
-                          </button>
+                        <div>
+                          <span className="text-[10px] font-bold text-[#C9A15A] uppercase tracking-wider block">Custom Itinerary Booking</span>
+                          <h4 className="text-sm font-bold text-[#EDEAE2] mt-0.5">Book Custom {result.city} Itinerary</h4>
+                          <span className="text-xs text-[#8A94A6] block mt-1">{result.days} Days / {result.days - 1} Nights · Includes stay & transit</span>
                         </div>
+                        <button
+                          onClick={() => {
+                            const imgUrl = cityImages[result.city] || "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80";
+                            router.push(`/checkout?packageId=custom&city=${encodeURIComponent(result.city)}&priceNum=9999&days=${result.days} Days / ${result.days - 1} Nights&image=${encodeURIComponent(imgUrl)}`);
+                          }}
+                          className="px-6 py-3 rounded-xl bg-[#C9A15A] hover:bg-[#E6C887] text-[#0B0F1A] text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 w-full cursor-pointer"
+                        >
+                          <CreditCard className="w-4 h-4" />
+                          Book Custom Trip Now
+                        </button>
                       </div>
                     )}
                   </div>
-                </motion.div>
-              )}
+                </div>
+              </div>
 
-            </AnimatePresence>
+            </div>
+          </motion.div>
+        ) : (
+          /* ── STANDARD 2-COLUMN FORM & PLACEHOLDER GRID ── */
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+
+            {/* Left: Form */}
+            <div className="lg:col-span-5 flex flex-col justify-center">
+              <span className="text-xs font-bold text-accent-primary uppercase tracking-widest block mb-2">
+                🚀 AI Magic Engine
+              </span>
+              <h2 className="font-heading font-black text-4xl md:text-6xl text-fg-main tracking-tight mb-5 leading-none">
+                Instant India Itinerary Planner
+              </h2>
+              <p className="text-base text-text-muted mb-8 leading-relaxed">
+                Pick any Indian city from our database, select your vibe, budget, and travel days. Watch the AI build a complete itinerary with transit routes, live costs, and weather advisories.
+              </p>
+
+              {/* API status pill */}
+              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold mb-6 w-fit shadow-inner ${apiOnline ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-orange-50 text-orange-700 border border-orange-200"}`}>
+                <Wifi className="w-3.5 h-3.5" />
+                {apiOnline ? `Live DB — ${cities.length} cities loaded` : "Offline — showing cached cities"}
+              </div>
+
+              <form onSubmit={handleGenerate} className="p-8 rounded-md bg-[#161B2C] border border-[#C9A15A]/30 shadow-document flex flex-col gap-6">
+
+                {/* City Dropdown */}
+                <div>
+                  <label className="font-sans text-[11px] font-semibold text-[#8A94A6] uppercase tracking-wider block mb-2">
+                    Select Destination City
+                  </label>
+                  <select
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="w-full px-4 py-3 rounded-md border border-[#C9A15A]/30 bg-[#0B0F1A] text-sm font-semibold focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A] cursor-pointer text-[#EDEAE2]"
+                  >
+                    {cities.map((c) => (
+                      <option key={c} value={c}>
+                        {cityEmojis[c] || "📍"} {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Budget slider */}
+                <div>
+                  <label className="font-sans text-[11px] font-semibold text-[#8A94A6] uppercase tracking-wider block mb-2">
+                    Trip Budget: <span className="text-[#C9A15A] font-bold text-sm font-mono">₹{budget.toLocaleString("en-IN")}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={5000} max={200000} step={1000}
+                    value={budget}
+                    onChange={(e) => setBudget(Number(e.target.value))}
+                    className="w-full accent-[#C9A15A] cursor-pointer h-2 bg-[#0B0F1A] rounded-md appearance-none border border-[#C9A15A]/20"
+                  />
+                  <div className="flex justify-between text-[10px] text-[#8A94A6] mt-2 font-mono">
+                    <span>₹5,000</span><span>₹1,00,000</span><span>₹2,00,000</span>
+                  </div>
+                </div>
+
+                {/* Pace + Days */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="font-sans text-[11px] font-semibold text-[#8A94A6] uppercase tracking-wider block mb-2">Travel Pace</label>
+                    <select
+                      value={pace}
+                      onChange={(e) => setPace(e.target.value)}
+                      className="w-full px-4 py-3 rounded-md border border-[#C9A15A]/30 bg-[#0B0F1A] text-sm font-semibold focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A] text-[#EDEAE2]"
+                    >
+                      <option value="relaxed">🧘 Relaxed (2/day)</option>
+                      <option value="moderate">🚶 Moderate (3/day)</option>
+                      <option value="packed">⚡ Packed (4/day)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-sans text-[11px] font-semibold text-[#8A94A6] uppercase tracking-wider block mb-2">Duration</label>
+                    <select
+                      value={daysCount}
+                      onChange={(e) => setDaysCount(Number(e.target.value))}
+                      className="w-full px-4 py-3 rounded-md border border-[#C9A15A]/30 bg-[#0B0F1A] text-sm font-semibold focus:outline-none focus:border-[#C9A15A] focus:ring-1 focus:ring-[#C9A15A] text-[#EDEAE2]"
+                    >
+                      {[2,3,4,5,6,7].map(d => (
+                        <option key={d} value={d}>{d} Day{d > 1 ? "s" : ""}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Vibe */}
+                <div>
+                  <label className="font-sans text-[11px] font-semibold text-[#8A94A6] uppercase tracking-wider block mb-2">Trip Vibe</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { id: "mixed",     label: "🎯 Mixed" },
+                      { id: "adventure", label: "⛰️ Adventure" },
+                      { id: "heritage",  label: "🕌 Heritage" },
+                      { id: "leisure",   label: "✨ Leisure" },
+                    ].map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setVibe(item.id)}
+                        className={`px-3 py-2.5 rounded-md text-xs font-semibold border transition-all cursor-pointer ${
+                          vibe === item.id
+                            ? "bg-[#C9A15A] border-[#C9A15A] text-[#0B0F1A] font-bold shadow-md"
+                            : "border-[#C9A15A]/30 hover:bg-[#C9A15A]/10 text-[#EDEAE2]"
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Submit */}
+                <button
+                  type="submit"
+                  disabled={loading || !city}
+                  className="flex items-center justify-center gap-2 w-full py-4 rounded-md bg-[#C9A15A] hover:bg-[#E6C887] text-[#0B0F1A] font-bold text-sm shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Generate {city ? `${city} Itinerary` : "Itinerary"}
+                </button>
+              </form>
+            </div>
+
+            {/* Right: Placeholder / Loading / Error Box */}
+            <div className="lg:col-span-7 h-[700px] relative w-full flex items-center justify-center">
+              <AnimatePresence mode="wait">
+
+                {/* Default */}
+                {!loading && !error && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="w-full h-full rounded-md border border-dashed border-[#C9A15A]/30 flex flex-col justify-center items-center p-12 text-center text-text-muted bg-[#161B2C]"
+                  >
+                    <div className="w-16 h-16 rounded-md bg-[#C9A15A]/10 text-[#C9A15A] border border-[#C9A15A]/30 flex items-center justify-center mb-6">
+                      <Sparkles className="w-8 h-8" />
+                    </div>
+                    <h3 className="font-heading font-extrabold text-2xl text-fg-main mb-2">
+                      Your India Itinerary Awaits
+                    </h3>
+                    <p className="text-sm max-w-sm mb-8 leading-relaxed font-sans text-[#8A94A6]">
+                      Choose from <strong>{cities.length} Indian cities</strong> in our live database. Set your vibe, budget, and duration — then hit generate!
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-2.5 max-w-lg">
+                      {cities.slice(0, 10).map(c => (
+                        <button
+                          key={c}
+                          onClick={() => setCity(c)}
+                          className={`px-3.5 py-1.5 rounded-md text-xs font-semibold border transition-all cursor-pointer ${city === c ? "bg-[#C9A15A] text-[#0B0F1A] border-[#C9A15A] font-bold shadow-md" : "border-[#C9A15A]/20 text-[#8A94A6] hover:border-[#C9A15A] bg-[#0B0F1A]"}`}
+                        >
+                          {cityEmojis[c]} {c}
+                        </button>
+                      ))}
+                      {cities.length > 10 && <span className="text-xs text-[#8A94A6] self-center font-bold">+{cities.length - 10} more</span>}
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Loading */}
+                {loading && (
+                  <motion.div
+                    key="loading"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="w-full h-full rounded-md bg-[#161B2C] border border-[#C9A15A]/30 flex flex-col justify-center items-center p-8 text-center gap-4"
+                  >
+                    <Loader2 className="w-12 h-12 text-[#C9A15A] animate-spin" />
+                    <h3 className="font-heading font-black text-xl text-fg-main">
+                      Building Your {city} Guide
+                    </h3>
+                    <motion.p
+                      key={loadingStep}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-sm text-[#8A94A6] max-w-xs font-sans"
+                    >
+                      {loadingStep}
+                    </motion.p>
+                    <div className="flex gap-1.5 mt-2">
+                      {loadingSteps.map((_, i) => (
+                        <div key={i} className={`h-1 rounded-full transition-all duration-500 ${i <= loadingSteps.indexOf(loadingStep) ? "w-10 bg-[#C9A15A]" : "w-5 bg-[#C9A15A]/20"}`} />
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Error */}
+                {!loading && error && (
+                  <motion.div
+                    key="error"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="w-full h-full rounded-md border border-red-500/30 bg-[#161B2C] flex flex-col justify-center items-center p-12 text-center gap-4"
+                  >
+                    <AlertCircle className="w-14 h-14 text-red-400" />
+                    <h3 className="font-heading font-bold text-xl text-red-400">Couldn&apos;t Generate Plan</h3>
+                    <p className="text-sm text-red-300 max-w-sm">{error}</p>
+                    <button
+                      onClick={() => setError(null)}
+                      className="mt-2 px-6 py-3 rounded-md bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-bold transition-all cursor-pointer"
+                    >
+                      Try Again
+                    </button>
+                  </motion.div>
+                )}
+
+              </AnimatePresence>
+            </div>
+
           </div>
-
-        </div>
+        )}
       </div>
     </section>
   );
